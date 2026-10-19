@@ -3,28 +3,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@500;600;700;800&family=Figtree:wght@400;500;600&display=swap">
 <style>
-/* Layout: one-column phone app, peach summary card on warm dark ground, fixed bottom tabs + floating add button */
+/* Layout: one-column phone app, soft dusty-peach summary card on warm dark ground, fixed bottom tabs + floating add button */
 :root{
-  --bg:#17110e; --surface:#231a16; --surface2:#2d221d; --line:#3b2e27;
-  --fg:#f4e7dd; --muted:#a8968a; --peach:#ffb89d; --ink:#3d1a0d; --ink-soft:#7a3f28;
-  --accent:#ffa27e; --good:#86d6a0; --bad:#ff8f80; --warn:#f2c26b;
-  --c1:#ff9f7a; --c2:#f2c26b; --c3:#86d6a0; --c4:#7fb8e6; --c5:#c79be8; --c6:#e88fb0; --c7:#b9a89a; --c8:#6fd1c6;
+  --bg:#1b1715; --surface:#252019; --surface2:#2e2823; --line:#3a332d;
+  --fg:#e8e0d8; --muted:#9a8f86; --peach:#d9b6a1; --ink:#2f1d14; --ink-soft:#6b4a3a; --short:#7f3523;
+  --accent:#d9a588; --good:#9cc4a6; --bad:#d99a8c; --warn:#d2b47a;
+  --c1:#cf9a82; --c2:#cdb27e; --c3:#97b89e; --c4:#8eabc4; --c5:#a99cc0; --c6:#c497a5; --c7:#a39a92; --c8:#88b5ad;
   --display:"Urbanist",ui-rounded,"Segoe UI",system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:dark;
 }
 @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
-  --bg:#faf3ee; --surface:#ffffff; --surface2:#f4e9e1; --line:#ead8cc;
-  --fg:#2a1a13; --muted:#7c6a5f; --peach:#ffb89d; --ink:#3d1a0d; --ink-soft:#7a3f28;
-  --accent:#c4532c; --good:#2d8a4e; --bad:#c43d2e; --warn:#a96d00;
-  --c1:#e2774f; --c2:#d19a1e; --c3:#3f9e5f; --c4:#3b82c4; --c5:#8f5bc4; --c6:#c95583; --c7:#8c7b6f; --c8:#2a9d91;
+  --bg:#f5f0eb; --surface:#fcfaf7; --surface2:#ede5dd; --line:#e2d8ce;
+  --fg:#3a2d26; --muted:#85776d; --peach:#e3c4b1; --ink:#2f1d14; --ink-soft:#6b4a3a; --short:#8a3a26;
+  --accent:#a8613f; --good:#4f7f5c; --bad:#a9503e; --warn:#8f6a1f;
+  --c1:#c0866b; --c2:#b8995a; --c3:#6f9878; --c4:#6c8eab; --c5:#8a7cab; --c6:#ab7486; --c7:#93887f; --c8:#5f958c;
   color-scheme:light;
 }}
 :root[data-theme="light"]{
-  --bg:#faf3ee; --surface:#ffffff; --surface2:#f4e9e1; --line:#ead8cc;
-  --fg:#2a1a13; --muted:#7c6a5f; --peach:#ffb89d; --ink:#3d1a0d; --ink-soft:#7a3f28;
-  --accent:#c4532c; --good:#2d8a4e; --bad:#c43d2e; --warn:#a96d00;
-  --c1:#e2774f; --c2:#d19a1e; --c3:#3f9e5f; --c4:#3b82c4; --c5:#8f5bc4; --c6:#c95583; --c7:#8c7b6f; --c8:#2a9d91;
+  --bg:#f5f0eb; --surface:#fcfaf7; --surface2:#ede5dd; --line:#e2d8ce;
+  --fg:#3a2d26; --muted:#85776d; --peach:#e3c4b1; --ink:#2f1d14; --ink-soft:#6b4a3a; --short:#8a3a26;
+  --accent:#a8613f; --good:#4f7f5c; --bad:#a9503e; --warn:#8f6a1f;
+  --c1:#c0866b; --c2:#b8995a; --c3:#6f9878; --c4:#6c8eab; --c5:#8a7cab; --c6:#ab7486; --c7:#93887f; --c8:#5f958c;
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -38,7 +38,7 @@ input{font:inherit;color:var(--fg)}
 .app{max-width:520px;margin:0 auto;padding-block:18px 130px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
 header.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:10px}
-.coin{width:38px;height:38px;border-radius:12px;background:var(--peach);display:grid;place-items:center;color:var(--ink);font-family:var(--display);font-weight:800;font-size:19px;transform:rotate(-8deg)}
+.coin{width:38px;height:38px;border-radius:12px;background:var(--peach);display:grid;place-items:center;color:var(--ink)}
 .brand h1{font-family:var(--display);font-weight:800;font-size:24px;margin:0;letter-spacing:-.01em}
 .iconbtn{width:42px;height:42px;border-radius:14px;background:var(--surface);display:grid;place-items:center;color:var(--muted)}
 .greet{font-family:var(--display);font-size:20px;font-weight:600;color:var(--muted);margin:0;line-height:1.35;text-wrap:balance}
@@ -51,7 +51,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .split .k{font-size:13px;color:var(--ink-soft);font-weight:600}
 .split .v{font-family:var(--display);font-weight:800;font-size:19px}
 .after{border-top:1.5px dashed color-mix(in srgb,var(--ink) 25%,transparent);padding-top:12px;font-size:14px;font-weight:600;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.after.short{color:#8f1d0c}
+.after.short{color:var(--short)}
 .pill{display:inline-flex;align-items:center;gap:6px;background:color-mix(in srgb,var(--ink) 10%,transparent);border-radius:99px;padding:4px 10px;font-size:13px;font-weight:600}
 
 .sec{display:flex;flex-direction:column;gap:10px}
@@ -99,7 +99,7 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var
 nav.tabs .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
 nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 12px;color:var(--muted);font-size:12.5px;font-weight:600}
 nav.tabs button[aria-current="page"]{color:var(--accent)}
-.fab{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:6;background:var(--peach);color:var(--ink);border-radius:20px;height:58px;padding:0 20px 0 16px;display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:16px;box-shadow:0 10px 30px -8px rgba(0,0,0,.45)}
+.fab{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:6;background:var(--peach);color:var(--ink);border-radius:20px;height:58px;padding:0 20px 0 16px;display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:16px;box-shadow:0 8px 24px -10px rgba(0,0,0,.35)}
 @media (min-width:560px){.fab{right:calc(50% - 250px)}}
 
 .scrim{position:fixed;inset:0;background:rgba(10,6,4,.55);z-index:20;opacity:0;transition:opacity .2s}
@@ -235,7 +235,7 @@ function render(){
 function header(){
   const h=new Date().getHours();const g=h<12?"Good morning":h<17?"Good afternoon":"Good evening";
   const month=new Date().toLocaleDateString("en-GB",{month:"long",year:"numeric"});
-  return `<header class="top"><div class="brand"><div class="coin">h</div><h1>Hisaab</h1></div>
+  return `<header class="top"><div class="brand"><div class="coin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="3"/><circle cx="12" cy="12" r="2.6"/><path d="M6.2 9.6h.01M17.8 14.4h.01"/></svg></div><h1>Hisaab</h1></div>
   <button class="iconbtn" data-act="settings" aria-label="Settings">${ICON.gear}</button></header>
   ${S.tab==="home"?`<p class="greet">${g}. Here's <b>${month}</b> so far.</p>`:""}`
 }
