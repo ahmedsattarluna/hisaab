@@ -1,0 +1,27 @@
+plugins { id 'com.android.application' }
+
+def run = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
+android {
+    namespace 'pk.hisaab.app'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'pk.hisaab.app'
+        minSdk 26
+        targetSdk 34
+        versionCode run
+        versionName "1.0.${run}"
+    }
+    signingConfigs {
+        release {
+            storeFile file('hisaab.keystore')
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "hisaab-key"
+            keyAlias 'hisaab'
+            keyPassword System.getenv("KEYSTORE_PASSWORD") ?: "hisaab-key"
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
