@@ -195,7 +195,7 @@ async function setProf(p){Object.assign(S.prof,p);
   if(S.mode==="db"){await S.root.set(JSON.parse(JSON.stringify(S.prof)))}else{saveLocal();render()}}
 
 async function connect(){
-  if(!(window.claude&&window.claude.use)){S.loading=false;render();checkShared();return}
+  if(!(window.claude&&window.claude.use)){S.loading=false;render();checkShared();scanSms();return}
   try{
     const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
     const uid=user?await user.id():null;
@@ -246,12 +246,12 @@ const GUESS=[[/TEA|CAFE|COFFEE|FOOD|KFC|MCDONALD|PIZZA|BURGER|BIRYANI|RESTAURANT
   [/JAZZ|ZONG|TELENOR|UFONE|ELECTRIC|LESCO|SNGPL|SSGC|PTCL|NAYATEL|WATER|INTERNET|NETFLIX/,"Bills"],
   [/DARAZ|OUTFITTERS|KHAADI|SAPPHIRE|J\.|BATA|SERVIS|MALL|SHOP/,"Shopping"]];
 const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
-function msgDate(b){let m;
+function msgDate(b,ms){let m;
   if(m=b.match(/\b(20\d\d)-(\d\d)-(\d\d)\b/))return m[1]+"-"+m[2]+"-"+m[3];
   if(m=b.match(/\b(\d{1,2})[-\/](\d{1,2})[-\/](20\d\d)\b/))return m[3]+"-"+pad(m[2])+"-"+pad(m[1]);
   if(m=b.match(/\b(\d{1,2})[- ]([A-Za-z]{3})[a-z]*[- ](20\d\d)\b/)){const mo=MON[m[2].toLowerCase()];if(mo)return m[3]+"-"+pad(mo)+"-"+pad(m[1])}
-  return today()}
-function parseSms(body){
+  return ms?dstr(new Date(+ms)):today()}
+function parseSms(body,ms){
   const b=String(body||"");
   if(/fail|unsuccess|declin|revers|\botp\b|one.time|verification|\bpin\b|tokeni/i.test(b))return null;
   const am=b.match(/(?:rs\.?|pkr)\s*([\d,]+(?:\.\d{1,2})?)/i);if(!am)return null;
@@ -265,7 +265,7 @@ function parseSms(body){
   let who=r?r[1].trim().replace(/\s+PK$/i,"").replace(/\s+(LHR|LAHORE|KHI|KARACHI|ISB|ISLAMABAD|RWP|RAWALPINDI|FSD|FAISALABAD|MULTAN|PESHAWAR|PSH)(\s+CITY)?$/i,"").trim():"";if(/^\d/.test(who))who="";who=who.slice(0,40);
   const key=who.toUpperCase();
   const idm=b.match(/(?:txn\s*id|trx\s*id|transaction\s*id|\btid)\s*[:#.]?\s*([A-Z0-9]{5,})/i);
-  const date=msgDate(b);const ref="sms:"+(idm?idm[1]:date+":"+amount+":"+b.length);
+  const date=msgDate(b,ms);const ref="sms:"+(idm?idm[1]:date+":"+amount+":"+b.length);
   let cat=type==="in"?"Top-up":"Other";
   if(type==="out"&&key){if(S.prof.catMap&&S.prof.catMap[key])cat=S.prof.catMap[key];else{const g=GUESS.find(([re])=>re.test(key));if(g)cat=g[1]}}
   return{type,amount,cat,merchant:key,note:who?titleCase(who):(type==="in"?"Money in":"Easypaisa payment"),ref,date}}
@@ -276,14 +276,57 @@ async function saveImported(p){
   if(man){await upd("txns",man.id,{ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:true});return"matched"}
   await add("txns",{type:p.type,cat:p.cat,amount:p.amount,note:p.note,date:p.date,ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:false});return"added"}
 async function importText(text){
+  if(isBackup(text)){restoreSheet(String(text).trim());return}
   const parsed=splitMsgs(text).map(m=>parseSms(m)).filter(Boolean);
   if(!parsed.length){toast("Couldn't find a payment in that message.");return}
   if(parsed.length===1){const p=parsed[0];if(S.cols.txns.some(t=>t.ref===p.ref)){toast("That payment is already added");return}txSheet(null,p);return}
   let added=0,dup=0;
   try{for(const p of parsed){const r=await saveImported(p);if(r==="added")added++;else dup++}}catch(e){toast(SAVE_ERR);return}
   toast("Added "+added+" payment"+(added===1?"":"s")+(dup?" · "+dup+" already there":""))}
+/* automatic reading (phone app with SMS access) */
+const SMSK="hisaab.sms";
+const SMS={on:false,since:0,senders:"3737, easypaisa",last:null};
+try{Object.assign(SMS,JSON.parse(localStorage.getItem(SMSK)||"{}"))}catch(e){}
+function saveSms(){try{localStorage.setItem(SMSK,JSON.stringify({on:SMS.on,since:SMS.since,senders:SMS.senders,last:SMS.last}))}catch(e){}}
+const canSms=()=>!!(NATIVE&&NATIVE.readSms);
+const hasSms=()=>{try{return canSms()&&NATIVE.hasSms()}catch(e){return false}};
+let scanning=false;
+async function scanSms(full){
+  if(!SMS.on||!hasSms()||scanning||S.mode!=="local")return;
+  scanning=true;let added=0;
+  try{
+    const since=full?monthStart():(SMS.since||monthStart());
+    const list=JSON.parse(NATIVE.readSms(since,SMS.senders)||"[]");let max=SMS.since||0;
+    for(const m of list){if(+m.date>max)max=+m.date;const p=parseSms(m.body,m.date);if(!p)continue;if((await saveImported(p))==="added")added++}
+    SMS.since=max;SMS.last={t:Date.now(),added};saveSms();
+    if(added)toast("Added "+added+" from Easypaisa");else if(full)toast("Easypaisa is up to date");
+  }catch(e){toast("Couldn't read Easypaisa messages. Try Check now in Settings.")}
+  scanning=false}
+window.hisaabSmsResult=(granted,blocked)=>{
+  if(granted){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true);return}
+  if(blocked)restrictedHelp();else toast("Hisaab needs SMS access to read Easypaisa messages.")};
+function turnOnSms(){if(hasSms()){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true)}else NATIVE.requestSms()}
+function restrictedHelp(){
+  openSheet(`<h3>Allow SMS access</h3>
+  <p class="note" style="font-size:15px;color:var(--fg)">Android locks SMS access for apps installed from a file until you unlock it once.</p>
+  <div class="box"><div>1. Tap <b>Open app settings</b> below.</div><div>2. Tap <b>⋮</b> at the top right, then <b>Allow restricted settings</b>.</div><div>3. Tap <b>Permissions → SMS → Allow</b>, then come back here.</div></div>
+  <button class="primary" id="r-open">Open app settings</button>`,()=>{$("r-open").onclick=()=>{closeSheet();try{NATIVE.openAppSettings()}catch(e){}}})}
+
+/* backup */
+function backupText(){return JSON.stringify({hisaab:1,saved:new Date().toISOString(),cols:S.cols,prof:S.prof})}
+function isBackup(t){t=String(t||"").trim();return t.startsWith("{")&&t.includes('"hisaab"')}
+function restoreSheet(text){
+  let d;try{d=JSON.parse(text)}catch(e){toast("That backup is damaged. Copy the whole backup text and try again.");return}
+  if(!d||!d.cols){toast("That isn't a Hisaab backup.");return}
+  if(S.mode!=="local"){toast("Restore works in the phone app.");return}
+  const n=(d.cols.txns||[]).length;
+  openSheet(`<h3>Restore backup?</h3><p class="note" style="font-size:15px;color:var(--fg)">This replaces everything in Hisaab with the backup from ${esc(d.saved?new Date(d.saved).toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"earlier")} (${n} entries).</p>
+  <button class="primary" id="rs-yes">Replace with backup</button><button class="plain" id="rs-no">Cancel</button>`,()=>{
+    $("rs-no").onclick=closeSheet;
+    $("rs-yes").onclick=()=>{S.cols=Object.assign(blank(),d.cols);S.prof=Object.assign({cur:"Rs",catMap:{}},d.prof);saveLocal();closeSheet();render();toast("Backup restored")}})}
+
 function checkShared(){if(!NATIVE||!NATIVE.takeShared)return;let t="";try{t=NATIVE.takeShared()||""}catch(e){}if(t)importText(t)}
-window.hisaabResume=()=>{render();checkShared()};
+window.hisaabResume=()=>{render();checkShared();scanSms()};
 
 /* ---------- numbers ---------- */
 function stats(){
@@ -338,7 +381,7 @@ function home(){
     <div class="bar">${cats.map(([c,v])=>`<span style="width:${(v/s.outM*100).toFixed(2)}%;background:${catColor("out",c)}"></span>`).join("")}</div>
     <div class="legend">${cats.map(([c,v])=>`<div><i style="background:${catColor("out",c)}"></i><span class="n">${esc(c)}</span><span class="a num">${esc(nf.format(v))}</span></div>`).join("")}</div></section>`;
   const all=S.cols.txns.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.created||0)-(a.created||0)).slice(0,60);
-  if(!all.length)h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money.${NATIVE?" Or share an Easypaisa SMS to Hisaab.":""}</span></div>`;
+  if(!all.length)h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money.${NATIVE?" Or turn on Easypaisa SMS in Settings.":""}</span></div>`;
   else{const groups={};all.forEach(t=>{(groups[t.date]=groups[t.date]||[]).push(t)});
     h+=`<section class="sec"><div class="sechead"><h2>Recent</h2></div>`+Object.keys(groups).map(k=>{const sum=groups[k].filter(t=>t.type==="out").reduce((a,t)=>a+(+t.amount||0),0);
       return `<div class="sechead daylbl"><span>${esc(dayLabel(k))}</span><span class="num">${sum?"Spent "+esc(nf.format(sum)):""}</span></div><div class="list">${groups[k].map(txRow).join("")}</div>`}).join("")+`</section>`}
@@ -582,17 +625,34 @@ function buySheet(i,boughtMode){
   })}
 
 function settingsSheet(){
-  const smsBox=`<div class="box"><h4>Add from Easypaisa messages</h4>
+  const last=SMS.last?new Date(SMS.last.t).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
+  const autoBox=!canSms()?"":SMS.on&&hasSms()?`<div class="box"><h4>Easypaisa SMS: on</h4>
+      <div class="note">New Easypaisa payments are added each time you open the app.${last?" Last checked "+esc(last)+".":""}</div>
+      <div class="field"><label for="s-snd">Read messages from</label><input id="s-snd" value="${esc(SMS.senders)}"></div>
+      <div class="acts"><button class="plain" id="s-scan" style="padding-left:0">Check now</button><button class="ghost" id="s-off">Turn off</button></div></div>`
+    :`<div class="box"><h4>Easypaisa SMS</h4>
+      <div class="note">Add Easypaisa payments and money received automatically, from this month's SMS onward. Messages stay on your phone.</div>
+      <button class="primary" id="s-on">Turn on</button></div>`;
+  const backupBox=S.mode==="local"?`<div class="box"><h4>Backup</h4><div class="note">Save all your Hisaab data${NATIVE&&NATIVE.shareText?" by sending it to yourself, for example on WhatsApp or Drive":" by copying it"}. To restore, paste that backup in the box above.</div>
+      <div class="acts"><button class="plain" id="s-bak" style="padding-left:0">Back up now</button></div></div>`:"";
+  const smsBox=autoBox+`<div class="box"><h4>Add from Easypaisa messages</h4>
     <div class="note">${NATIVE?"In your Messages app, long-press an Easypaisa message, tap <b>Share</b>, then pick <b>Hisaab</b>. Or paste":"Paste"} one or more Easypaisa messages here.</div>
-    <div class="field"><label for="s-msg">Messages</label><textarea id="s-msg" rows="4" placeholder="Txn ID … You have paid Rs. 649.00 at …"></textarea></div>
+    <div class="field"><label for="s-msg">Messages</label><textarea id="s-msg" rows="3" placeholder="Txn ID … You have paid Rs. 649.00 at …"></textarea></div>
     <div class="acts"><button class="plain" id="s-imp" style="padding-left:0">Add these</button></div></div>`;
   openSheet(`<h3>Settings</h3>
   ${smsBox}
+  ${backupBox}
   <div class="field"><label for="s-cur">Currency label</label><input id="s-cur" value="${esc(S.prof.cur)}" maxlength="5" placeholder="Rs"></div>
   <p class="note">${S.mode==="db"?"Your entries are saved to your Claude account, so they're here on any device you open this on.":"Your entries are saved on this phone. Uninstalling the app deletes them."}</p>
   <button class="primary" id="s-save">Save</button>`,()=>{
+    const on=$("s-on");if(on)on.onclick=turnOnSms;
+    const off=$("s-off");if(off)off.onclick=()=>{SMS.on=false;saveSms();closeSheet();toast("Easypaisa SMS turned off")};
+    const sc=$("s-scan");if(sc)sc.onclick=()=>{const v=$("s-snd").value.trim();if(v)SMS.senders=v;saveSms();closeSheet();scanSms(true)};
+    const bk=$("s-bak");if(bk)bk.onclick=async()=>{const t=backupText();
+      if(NATIVE&&NATIVE.shareText){try{NATIVE.shareText(t)}catch(e){}return}
+      try{await navigator.clipboard.writeText(t);toast("Backup copied. Paste it somewhere safe.")}catch(e){$("s-msg").value=t;$("s-msg").select();toast("Copy the selected text and keep it somewhere safe.")}};
     $("s-imp").onclick=()=>{const v=$("s-msg").value.trim();if(!v){toast("Paste a message first.");return}closeSheet();setTimeout(()=>importText(v),260)};
-    $("s-save").onclick=async()=>{const c=$("s-cur").value.trim()||"Rs";      closeSheet();try{await setProf({cur:c})}catch(e){toast(SAVE_ERR)}}})}
+    $("s-save").onclick=async()=>{const c=$("s-cur").value.trim()||"Rs";const snd=$("s-snd");if(snd&&snd.value.trim()){SMS.senders=snd.value.trim();saveSms()}      closeSheet();try{await setProf({cur:c})}catch(e){toast(SAVE_ERR)}}})}
 
 /* ---------- actions ---------- */
 async function payBill(b){

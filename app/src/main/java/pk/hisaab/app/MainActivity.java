@@ -3,6 +3,9 @@ package pk.hisaab.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.Manifest;
+import android.database.Cursor;
+import android.content.pm.PackageManager;
 import android.webkit.JavascriptInterface;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
@@ -109,6 +112,17 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static final int SMS_REQ = 7;
+
+    @Override
+    public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(code, perms, results);
+        if (code != SMS_REQ) return;
+        boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        boolean blocked = !granted && !shouldShowRequestPermissionRationale(Manifest.permission.READ_SMS);
+        web.evaluateJavascript("window.hisaabSmsResult&&window.hisaabSmsResult(" + granted + "," + blocked + ")", null);
+    }
+
     private class Bridge {
         /** Returns text shared from another app (once), or an empty string. */
         @JavascriptInterface
@@ -117,6 +131,68 @@ public class MainActivity extends Activity {
             sharedText = null;
             return t == null ? "" : t;
         }
+
+        /** Opens Android's share sheet with the given text (used for backups). */
+        @JavascriptInterface
+        public void shareText(String text) {
+            ui.post(() -> {
+                Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain")
+                    .putExtra(Intent.EXTRA_SUBJECT, "Hisaab backup")
+                    .putExtra(Intent.EXTRA_TEXT, text);
+                startActivity(Intent.createChooser(send, "Save Hisaab backup"));
+            });
+        }
+
+        @JavascriptInterface
+        public boolean hasSms() {
+            return checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED;
+        }
+
+        @JavascriptInterface
+        public void requestSms() {
+            ui.post(() -> requestPermissions(new String[]{Manifest.permission.READ_SMS}, SMS_REQ));
+        }
+
+        @JavascriptInterface
+        public void openAppSettings() {
+            ui.post(() -> startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getPackageName()))));
+        }
+
+        /** Inbox messages newer than `since` (ms) whose sender matches one of the comma-separated names. */
+        @JavascriptInterface
+        public String readSms(double since, String senders) {
+            JSONArray out = new JSONArray();
+            if (!hasSms()) return out.toString();
+            String[] tokens = (senders == null ? "" : senders).toLowerCase().split(",");
+            try (Cursor c = getContentResolver().query(Uri.parse("content://sms/inbox"),
+                    new String[]{"address", "body", "date"}, "date > ?",
+                    new String[]{String.valueOf((long) since)}, "date ASC")) {
+                if (c == null) return out.toString();
+                int seen = 0;
+                while (c.moveToNext() && seen++ < 5000 && out.length() < 800) {
+                    String addr = c.getString(0);
+                    if (addr == null || !senderMatches(addr, tokens)) continue;
+                    JSONObject m = new JSONObject();
+                    m.put("address", addr);
+                    m.put("body", c.getString(1));
+                    m.put("date", c.getLong(2));
+                    out.put(m);
+                }
+            } catch (Exception ignored) { }
+            return out.toString();
+        }
+    }
+
+    private static boolean senderMatches(String addr, String[] tokens) {
+        String a = addr.toLowerCase().replaceAll("[^a-z0-9]", "");
+        for (String t : tokens) {
+            String k = t.trim().replaceAll("[^a-z0-9]", "");
+            if (k.isEmpty()) continue;
+            if (a.equals(k)) return true;
+            if (!k.matches("[0-9]+") && a.contains(k)) return true;
+        }
+        return false;
     }
 
     /* ---------------- updates ---------------- */
