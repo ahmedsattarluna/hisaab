@@ -8,7 +8,7 @@
   --bg:#1b1715; --surface:#252019; --surface2:#2e2823; --line:#3a332d;
   --fg:#e8e0d8; --muted:#9a8f86; --peach:#d9b6a1; --ink:#2f1d14; --ink-soft:#6b4a3a; --short:#7f3523;
   --accent:#d9a588; --good:#9cc4a6; --bad:#d99a8c; --warn:#d2b47a;
-  --c1:#cf9a82; --c2:#cdb27e; --c3:#97b89e; --c4:#8eabc4; --c5:#a99cc0; --c6:#c497a5; --c7:#a39a92; --c8:#88b5ad;
+  --c1:#cf9a82; --c2:#cdb27e; --c3:#97b89e; --c4:#8eabc4; --c5:#a99cc0; --c6:#c497a5; --c7:#a39a92; --c8:#88b5ad; --c9:#b3b58c;
   --display:"Urbanist",ui-rounded,"Segoe UI",system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:dark;
@@ -17,14 +17,14 @@
   --bg:#f5f0eb; --surface:#fcfaf7; --surface2:#ede5dd; --line:#e2d8ce;
   --fg:#3a2d26; --muted:#85776d; --peach:#e3c4b1; --ink:#2f1d14; --ink-soft:#6b4a3a; --short:#8a3a26;
   --accent:#a8613f; --good:#4f7f5c; --bad:#a9503e; --warn:#8f6a1f;
-  --c1:#c0866b; --c2:#b8995a; --c3:#6f9878; --c4:#6c8eab; --c5:#8a7cab; --c6:#ab7486; --c7:#93887f; --c8:#5f958c;
+  --c1:#c0866b; --c2:#b8995a; --c3:#6f9878; --c4:#6c8eab; --c5:#8a7cab; --c6:#ab7486; --c7:#93887f; --c8:#5f958c; --c9:#878c52;
   color-scheme:light;
 }}
 :root[data-theme="light"]{
   --bg:#f5f0eb; --surface:#fcfaf7; --surface2:#ede5dd; --line:#e2d8ce;
   --fg:#3a2d26; --muted:#85776d; --peach:#e3c4b1; --ink:#2f1d14; --ink-soft:#6b4a3a; --short:#8a3a26;
   --accent:#a8613f; --good:#4f7f5c; --bad:#a9503e; --warn:#8f6a1f;
-  --c1:#c0866b; --c2:#b8995a; --c3:#6f9878; --c4:#6c8eab; --c5:#8a7cab; --c6:#ab7486; --c7:#93887f; --c8:#5f958c;
+  --c1:#c0866b; --c2:#b8995a; --c3:#6f9878; --c4:#6c8eab; --c5:#8a7cab; --c6:#ab7486; --c7:#93887f; --c8:#5f958c; --c9:#878c52;
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -96,8 +96,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .tile .v{font-family:var(--display);font-weight:800;font-size:22px}
 
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));z-index:5}
-nav.tabs .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
-nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 12px;color:var(--muted);font-size:12.5px;font-weight:600}
+nav.tabs .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 12px;color:var(--muted);font-size:11.5px;font-weight:600;min-width:0}
 nav.tabs button[aria-current="page"]{color:var(--accent)}
 .fab{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:6;background:var(--peach);color:var(--ink);border-radius:20px;height:58px;padding:0 20px 0 16px;display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:16px;box-shadow:0 8px 24px -10px rgba(0,0,0,.35)}
 @media (min-width:560px){.fab{right:calc(50% - 250px)}}
@@ -135,6 +135,17 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 .toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--bg);padding:12px 16px;border-radius:16px;font-weight:600;font-size:14px;z-index:30;opacity:0;pointer-events:none;transition:.2s;display:flex;gap:14px;align-items:center;width:max-content;max-width:calc(100% - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast button{color:var(--peach);font-weight:800;filter:brightness(.8)}
+.prog{height:6px;border-radius:9px;background:var(--surface2);overflow:hidden;margin-top:7px}
+.prog span{display:block;height:100%;border-radius:9px;background:var(--good)}
+.tog{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface2);border-radius:14px;font-weight:500;cursor:pointer}
+.tog input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0}
+.box{background:var(--surface2);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.box h4{margin:0;font-family:var(--display);font-size:16px;font-weight:700}
+.box .acts{display:flex;gap:6px;flex-wrap:wrap}
+.box .acts button{padding:8px 0;margin-right:14px}
+.hist{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.hist div{display:flex;justify-content:space-between;gap:10px;color:var(--muted)}
+.title{font-family:var(--display);font-weight:800;font-size:26px;margin:0}
 .loading{color:var(--muted);text-align:center;padding:40px 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -146,9 +157,11 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 </button>
 
 <nav class="tabs" aria-label="Sections"><div class="in">
-  <button data-tab="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
-  <button data-tab="bills"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Bills</button>
-  <button data-tab="buy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14l-1.2 11.2A2 2 0 0 1 15.8 20H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>To buy</button>
+  <button data-tab="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button data-tab="bills"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Bills</button>
+  <button data-tab="savings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v3L6 9v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9l-3-3V3"/><path d="M9 14h6"/></svg>Savings</button>
+  <button data-tab="loans"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></svg>Loans</button>
+  <button data-tab="buy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14l-1.2 11.2A2 2 0 0 1 15.8 20H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>To buy</button>
 </div></nav>
 
 <div class="scrim" id="scrim" hidden></div>
@@ -156,13 +169,16 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 <div class="toast" id="toast" role="status"><span id="toastmsg"></span><button id="toastundo" hidden>Undo</button></div>
 
 <script>
-const OUT=[["Food","--c1"],["Transport","--c4"],["Shopping","--c5"],["Bills","--c2"],["Loan repay","--c6"],["Family","--c3"],["Health","--c8"],["Other","--c7"]];
-const IN=[["Salary","--c3"],["Borrowed","--c6"],["Gift","--c5"],["Other","--c7"]];
+const OUT=[["Food","--c1"],["Transport","--c4"],["Shopping","--c5"],["Bills","--c2"],["Loan repay","--c6"],["Family","--c3"],["Health","--c8"],["Savings","--c9"],["Other","--c7"]];
+const IN=[["Salary","--c3"],["Top-up","--c4"],["Borrowed","--c6"],["From savings","--c9"],["Gift","--c5"],["Other","--c7"]];
 const catColor=(type,c)=>{const l=type==="in"?IN:OUT;const f=l.find(x=>x[0]===c);return "var("+(f?f[1]:"--c7")+")"};
+const COLS=["txns","bills","buy","savings","loans"];
+const blank=()=>({txns:[],bills:[],buy:[],savings:[],loans:[]});
+const NATIVE=window.HisaabNative||null;
 
-const S={cols:{txns:[],bills:[],buy:[]},prof:{cur:"Rs"},mode:"local",root:null,tab:"home",loading:!!(window.claude&&window.claude.use)};
+const S={cols:blank(),prof:{cur:"Rs",catMap:{}},mode:"local",root:null,tab:"home",loading:!!(window.claude&&window.claude.use)};
 const LS="hisaab.v1";
-try{const d=JSON.parse(localStorage.getItem(LS)||"null");if(d){S.cols=Object.assign({txns:[],bills:[],buy:[]},d.cols);S.prof=Object.assign({cur:"Rs"},d.prof)}}catch(e){}
+try{const d=JSON.parse(localStorage.getItem(LS)||"null");if(d){S.cols=Object.assign(blank(),d.cols);S.prof=Object.assign({cur:"Rs",catMap:{}},d.prof)}}catch(e){}
 try{const t=localStorage.getItem("hisaab.tab");if(t)S.tab=t}catch(e){}
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify({cols:S.cols,prof:S.prof}))}catch(e){}}
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -175,18 +191,18 @@ async function upd(col,id,patch){
 async function del(col,id){
   if(S.mode==="db"){await S.root.collection(col).doc(id).delete()}else{S.cols[col]=S.cols[col].filter(r=>r.id!==id);saveLocal();render()}}
 async function setProf(p){Object.assign(S.prof,p);
-  if(S.mode==="db"){await S.root.set(Object.assign({},S.prof))}else{saveLocal();render()}}
+  if(S.mode==="db"){await S.root.set(JSON.parse(JSON.stringify(S.prof)))}else{saveLocal();render()}}
 
 async function connect(){
-  if(!(window.claude&&window.claude.use)){S.loading=false;render();return}
+  if(!(window.claude&&window.claude.use)){S.loading=false;render();scanSms();return}
   try{
     const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
     const uid=user?await user.id():null;
     if(!db||!uid){S.loading=false;render();return}
-    S.root=db.doc("data/users/"+uid+"/profile");S.mode="db";S.cols={txns:[],bills:[],buy:[]};
-    let waiting=4;const first=()=>{if(--waiting<=0){S.loading=false}render()};
-    ["txns","bills","buy"].forEach(c=>{let f=true;S.root.collection(c).onSnapshot(s=>{S.cols[c]=s.docs.map(d=>Object.assign({id:d.id},d.data()));if(f){f=false;first()}else render()},()=>toast("Lost the connection to your saved data. Reload the page."))});
-    let pf=true;S.root.onSnapshot(s=>{if(s.exists)S.prof=Object.assign({cur:"Rs"},s.data());if(pf){pf=false;first()}else render()},()=>{});
+    S.root=db.doc("data/users/"+uid+"/profile");S.mode="db";S.cols=blank();
+    let waiting=COLS.length+1;const first=()=>{if(--waiting<=0){S.loading=false}render()};
+    COLS.forEach(c=>{let f=true;S.root.collection(c).onSnapshot(s=>{S.cols[c]=s.docs.map(d=>Object.assign({id:d.id},d.data()));if(f){f=false;first()}else render()},()=>toast("Lost the connection to your saved data. Reload the page."))});
+    let pf=true;S.root.onSnapshot(s=>{if(s.exists)S.prof=Object.assign({cur:"Rs",catMap:{}},s.data());if(pf){pf=false;first()}else render()},()=>{});
   }catch(e){S.mode="local";S.loading=false;render()}
 }
 
@@ -195,79 +211,155 @@ const pad=n=>String(n).padStart(2,"0");
 const dstr=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const today=()=>dstr(new Date());
 const MK=()=>today().slice(0,7);
+const pdate=ds=>{const [Y,M,D]=(ds||today()).split("-").map(Number);return new Date(Y,M-1,D)};
+const dayDiff=(a,b)=>Math.abs(Math.round((pdate(a)-pdate(b))/864e5));
+const fmtDate=ds=>pdate(ds).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+const monthStart=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1).getTime()};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const nf=new Intl.NumberFormat("en-US",{maximumFractionDigits:2});
-const money=(v,sign)=>{const n=Number(v)||0;const s=(n<0?"−":(sign&&n>0?"+":""))+S.prof.cur+" "+nf.format(Math.abs(n));return s};
+const money=v=>{const n=Number(v)||0;return (n<0?"−":"")+S.prof.cur+" "+nf.format(Math.abs(n))};
 const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
 const parseAmt=v=>{const n=parseFloat(String(v).replace(/[, ]/g,""));return isFinite(n)?Math.round(n*100)/100:NaN};
+const same=(a,b)=>Math.abs((+a||0)-(+b||0))<0.005;
+const titleCase=s=>s.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());
 function dayLabel(ds){const t=today();const y=dstr(new Date(Date.now()-864e5));if(ds===t)return"Today";if(ds===y)return"Yesterday";
-  const [Y,M,D]=ds.split("-").map(Number);return new Date(Y,M-1,D).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+  return pdate(ds).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
 const ICON={
   check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
   plus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  note:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="3"/><circle cx="12" cy="12" r="2.6"/><path d="M6.2 9.6h.01M17.8 14.4h.01"/></svg>',
   gear:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
 
+/* Recording money: a manual entry that matches an Easypaisa entry (same amount, within 2 days) updates that entry instead of adding a duplicate. */
+async function recordTxn(data){
+  const m=S.cols.txns.find(t=>t.ref&&!t.linked&&t.type===data.type&&same(t.amount,data.amount)&&dayDiff(t.date,data.date)<=2);
+  if(m){const prev={cat:m.cat,note:m.note||"",linked:false};await upd("txns",m.id,{cat:data.cat,note:data.note||m.note||"",linked:true});return{id:m.id,prev,matched:true}}
+  const id=await add("txns",data);return{id,prev:null,matched:false}}
+async function unrecord(id,prev){if(!id)return;if(prev)await upd("txns",id,prev);else await del("txns",id)}
+
+/* ---------- Easypaisa SMS ---------- */
+const SMSK="hisaab.sms";
+const SMS={on:false,since:0,senders:"3737, easypaisa",seen:[],last:null};
+try{Object.assign(SMS,JSON.parse(localStorage.getItem(SMSK)||"{}"))}catch(e){}
+function saveSms(){SMS.seen=SMS.seen.slice(-1500);try{localStorage.setItem(SMSK,JSON.stringify(SMS))}catch(e){}}
+const GUESS=[[/TEA|CAFE|COFFEE|FOOD|KFC|MCDONALD|PIZZA|BURGER|BIRYANI|RESTAURANT|BAKERY|BAKERS|SWEETS|DHABA|HOTEL|MART|GROCER|STORE|SUPER ?MARKET|CHAYE|CHAI/,"Food"],
+  [/FUEL|PETROL|PSO|SHELL|TOTAL|ATTOCK|CAREEM|UBER|INDRIVE|BYKEA|YANGO|METRO BUS/,"Transport"],
+  [/PHARM|MEDIC|HOSPITAL|CLINIC|LAB\b|DENTAL/,"Health"],
+  [/JAZZ|ZONG|TELENOR|UFONE|ELECTRIC|LESCO|SNGPL|SSGC|PTCL|NAYATEL|WATER|INTERNET|NETFLIX/,"Bills"],
+  [/DARAZ|OUTFITTERS|KHAADI|SAPPHIRE|J\.|BATA|SERVIS|MALL|SHOP/,"Shopping"]];
+function parseSms(body,ms){
+  const b=String(body||"");
+  if(/fail|unsuccess|declin|revers|\botp\b|one.time|verification|\bpin\b|tokeni/i.test(b))return null;
+  const am=b.match(/(?:rs\.?|pkr)\s*([\d,]+(?:\.\d{1,2})?)/i);if(!am)return null;
+  const amount=parseFloat(am[1].replace(/,/g,""));if(!(amount>0))return null;
+  const OUTRE=/\b(paid|sent|charged|debited|withdrawn|withdrawal|transferred|purchase|deducted|spent)\b/i,INRE=/\b(received|credited|deposited|cash ?in|refunded|refund)\b/i;
+  const o=b.search(OUTRE),i=b.search(INRE);if(o<0&&i<0)return null;
+  const type=o<0?"in":i<0?"out":(o<i?"out":"in");
+  const rest=b.slice(am.index);
+  const STOP="(?=\\s{2,}|\\s+on\\s|\\s+via\\s|\\s+for\\s|\\s+from\\s|,|\\.\\s|\\.$|\\(|\\s+A\\/C|\\s+AC#|\\s+account|$)";
+  const r=rest.match(new RegExp(type==="out"?"\\b(?:at|to)\\s+(.+?)"+STOP:"\\bfrom\\s+(.+?)"+STOP,"i"));
+  let who=r?r[1].trim():"";if(/^\d/.test(who))who="";who=who.slice(0,40);
+  const key=who.toUpperCase();
+  const idm=b.match(/(?:txn\s*id|trx\s*id|transaction\s*id|\btid)\s*[:#.]?\s*([A-Z0-9]{5,})/i);
+  const ref="sms:"+(idm?idm[1]:ms+":"+amount);
+  let cat=type==="in"?"Top-up":"Other";
+  if(type==="out"&&key){if(S.prof.catMap&&S.prof.catMap[key])cat=S.prof.catMap[key];else{const g=GUESS.find(([re])=>re.test(key));if(g)cat=g[1]}}
+  return{type,amount,cat,merchant:key,note:who?titleCase(who):(type==="in"?"Money in":"Easypaisa payment"),ref,date:dstr(new Date(+ms))}}
+let scanning=false;
+async function scanSms(full){
+  if(!NATIVE||!SMS.on||scanning||S.mode!=="local")return;
+  let ok=false;try{ok=NATIVE.hasSms()}catch(e){}
+  if(!ok)return;
+  scanning=true;let added=0,matched=0;
+  try{
+    const since=full?monthStart():(SMS.since||monthStart());
+    const list=JSON.parse(NATIVE.readSms(since,SMS.senders)||"[]");
+    const seen=new Set(SMS.seen);let max=SMS.since||0;
+    for(const m of list){
+      if(+m.date>max)max=+m.date;
+      const p=parseSms(m.body,m.date);if(!p)continue;
+      if(seen.has(p.ref)||S.cols.txns.some(t=>t.ref===p.ref))continue;
+      seen.add(p.ref);SMS.seen.push(p.ref);
+      const man=S.cols.txns.find(t=>!t.ref&&t.type===p.type&&same(t.amount,p.amount)&&dayDiff(t.date,p.date)<=2);
+      if(man){await upd("txns",man.id,{ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:true});matched++}
+      else{await add("txns",{type:p.type,cat:p.cat,amount:p.amount,note:p.note,date:p.date,ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:false});added++}
+    }
+    SMS.since=Math.max(max,full?0:SMS.since||0);SMS.last={t:Date.now(),added};saveSms();
+    if(added)toast("Added "+added+" from Easypaisa");else if(full)toast(matched?"Easypaisa is up to date":"No new Easypaisa messages");
+  }catch(e){toast("Couldn't read Easypaisa messages. Try Check now in Settings.")}
+  scanning=false}
+window.hisaabResume=()=>{render();scanSms()};
+window.hisaabSmsResult=(granted,blocked)=>{
+  if(granted){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true);return}
+  if(blocked)restrictedHelp();else toast("Hisaab needs SMS access to read Easypaisa messages.")};
+function turnOnSms(){let ok=false;try{ok=NATIVE.hasSms()}catch(e){}
+  if(ok){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true)}else NATIVE.requestSms()}
+function restrictedHelp(){
+  openSheet(`<h3>Allow SMS access</h3>
+  <p class="note" style="font-size:15px;color:var(--fg)">Android blocks SMS access for apps installed from a file until you allow it once.</p>
+  <div class="box"><div>1. Tap <b>Open app settings</b> below.</div><div>2. Tap <b>⋮</b> at the top right, then <b>Allow restricted settings</b>.</div><div>3. Come back to Hisaab and tap <b>Turn on</b> again in Settings.</div></div>
+  <button class="primary" id="r-open">Open app settings</button>`,()=>{document.getElementById("r-open").onclick=()=>{closeSheet();try{NATIVE.openAppSettings()}catch(e){}}})}
+
+/* ---------- numbers ---------- */
 function stats(){
   const mk=MK();const tx=S.cols.txns.filter(t=>(t.date||"").startsWith(mk));
-  const inM=tx.filter(t=>t.type==="in").reduce((a,t)=>a+(+t.amount||0),0);
-  const outM=tx.filter(t=>t.type==="out").reduce((a,t)=>a+(+t.amount||0),0);
-  const borrowed=tx.filter(t=>t.type==="in"&&t.cat==="Borrowed").reduce((a,t)=>a+(+t.amount||0),0);
+  const sum=f=>tx.filter(f).reduce((a,t)=>a+(+t.amount||0),0);
+  const inM=sum(t=>t.type==="in"),outM=sum(t=>t.type==="out");
   const unpaid=S.cols.bills.filter(b=>b.paid!==mk);
   const due=unpaid.reduce((a,b)=>a+(+b.amount||0),0);
   const byCat={};tx.filter(t=>t.type==="out").forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+(+t.amount||0)});
-  return{tx,inM,outM,borrowed,unpaid,due,left:inM-outM,byCat}
+  const loansLeft=S.cols.loans.reduce((a,l)=>a+Math.max(0,(+l.amount||0)-(+l.paidBack||0)),0);
+  const saved=S.cols.savings.reduce((a,p)=>a+(+p.saved||0),0);
+  return{tx,inM,outM,unpaid,due,left:inM-outM,byCat,loansLeft,saved,savedThisMonth:sum(t=>t.type==="out"&&t.cat==="Savings")}
 }
 function billStatus(b){const d=new Date().getDate();const day=+b.day||1;
-  if(b.paid===MK())return{cls:"",txt:"Paid for "+new Date().toLocaleDateString("en-GB",{month:"long"})};
+  if(b.paid===MK()){const n=new Date();const nx=new Date(n.getFullYear(),n.getMonth()+1,1);
+    return{cls:"",txt:"Paid · next due "+ord(day)+" "+nx.toLocaleDateString("en-GB",{month:"short"})}}
   if(day<d)return{cls:"over",txt:"Overdue · was due the "+ord(day)};
   if(day===d)return{cls:"over",txt:"Due today"};
   if(day-d<=5)return{cls:"soon",txt:"Due in "+(day-d)+" day"+(day-d>1?"s":"")};
-  return{cls:"",txt:"Due the "+ord(day)}}
+  return{cls:"",txt:"Due the "+ord(day)+" of every month"}}
 
 /* ---------- render ---------- */
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===S.tab?"page":"false"));
   const app=document.getElementById("app");
   if(S.loading){app.innerHTML='<p class="loading">Opening your hisaab…</p>';return}
-  app.innerHTML=header()+(S.tab==="home"?home():S.tab==="bills"?bills():buy());
+  const v={home,bills,savings,loans,buy}[S.tab]||home;
+  app.innerHTML=header()+v();
 }
 function header(){
-  const h=new Date().getHours();const g=h<12?"Good morning":h<17?"Good afternoon":"Good evening";
-  const month=new Date().toLocaleDateString("en-GB",{month:"long",year:"numeric"});
-  return `<header class="top"><div class="brand"><div class="coin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="3"/><circle cx="12" cy="12" r="2.6"/><path d="M6.2 9.6h.01M17.8 14.4h.01"/></svg></div><h1>Hisaab</h1></div>
-  <button class="iconbtn" data-act="settings" aria-label="Settings">${ICON.gear}</button></header>
-  ${S.tab==="home"?`<p class="greet">${g}. Here's <b>${month}</b> so far.</p>`:""}`
-}
+  return `<header class="top"><div class="brand"><div class="coin">${ICON.note}</div><h1>Hisaab</h1></div>
+  <button class="iconbtn" data-act="settings" aria-label="Settings">${ICON.gear}</button></header>`}
 function txRow(t){const c=catColor(t.type,t.cat);
+  const sub=(t.note?t.cat:(t.type==="in"?"Money in":"Spent"))+(t.src==="easypaisa"?" · Easypaisa":"");
   return `<button class="row" data-act="edit-tx" data-id="${t.id}"><div class="dot" style="background:${c}">${esc((t.cat||"?")[0])}</div>
-  <div class="mid"><div class="t">${esc(t.note||t.cat)}</div><div class="s">${esc(t.note?t.cat:(t.type==="in"?"Money in":"Spent"))}</div></div>
+  <div class="mid"><div class="t">${esc(t.note||t.cat)}</div><div class="s">${esc(sub)}</div></div>
   <div class="amt num ${t.type==="in"?"in":""}">${t.type==="in"?"+":"−"}${esc(S.prof.cur)} ${nf.format(+t.amount||0)}</div></button>`}
 function home(){
-  const s=stats();const after=s.left-s.due;
+  const s=stats();const after=s.left-s.due;const mon=new Date().toLocaleDateString("en-GB",{month:"long"});
   let h=`<section class="card" aria-label="This month">
-    <div><div class="lbl">Left this month</div><div class="big num">${esc(money(s.left))}</div></div>
+    <div><div class="lbl">Left in ${mon}</div><div class="big num">${esc(money(s.left))}</div></div>
     <div class="split"><div><div class="k">Money in</div><div class="v num">${esc(money(s.inM))}</div></div>
     <div><div class="k">Spent</div><div class="v num">${esc(money(s.outM))}</div></div></div>
-    ${s.borrowed>0?`<div><span class="pill">Borrowed this month: ${esc(money(s.borrowed))}</span></div>`:""}
+    ${s.loansLeft>0?`<div><button class="pill" data-tab="loans">Loans to clear: ${esc(money(s.loansLeft))}</button></div>`:""}
     <div class="after ${after<0?"short":""}"><span>${s.unpaid.length?`Bills still due: ${esc(money(s.due))}`:"All bills paid"}</span>
     <span>${after<0?`Short by ${esc(money(-after))}`:`Free to spend: ${esc(money(after))}`}</span></div></section>`;
-  // due soon
   const d=new Date().getDate();
   const soon=s.unpaid.filter(b=>(+b.day||1)-d<=5).sort((a,b)=>a.day-b.day).slice(0,3);
-  if(soon.length){h+=`<section class="sec"><div class="sechead"><h2>Pay soon</h2><button class="link" data-tab="bills">All bills</button></div><div class="list">${soon.map(billRow).join("")}</div></section>`}
-  // breakdown
+  if(soon.length)h+=`<section class="sec"><div class="sechead"><h2>Pay soon</h2><button class="link" data-tab="bills">All bills</button></div><div class="list">${soon.map(billRow).join("")}</div></section>`;
   const cats=Object.entries(s.byCat).sort((a,b)=>b[1]-a[1]);
-  if(cats.length){h+=`<section class="sec"><div class="sechead"><h2>Where it went</h2><span class="aside">${new Date().toLocaleDateString("en-GB",{month:"long"})}</span></div>
+  if(cats.length)h+=`<section class="sec"><div class="sechead"><h2>Where it went</h2><span class="aside">${mon}</span></div>
     <div class="bar">${cats.map(([c,v])=>`<span style="width:${(v/s.outM*100).toFixed(2)}%;background:${catColor("out",c)}"></span>`).join("")}</div>
-    <div class="legend">${cats.map(([c,v])=>`<div><i style="background:${catColor("out",c)}"></i><span class="n">${esc(c)}</span><span class="a num">${esc(nf.format(v))}</span></div>`).join("")}</div></section>`}
-  // recent
+    <div class="legend">${cats.map(([c,v])=>`<div><i style="background:${catColor("out",c)}"></i><span class="n">${esc(c)}</span><span class="a num">${esc(nf.format(v))}</span></div>`).join("")}</div></section>`;
   const all=S.cols.txns.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.created||0)-(a.created||0)).slice(0,60);
-  if(!all.length){h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money. It takes two taps.</span></div>`}
+  if(!all.length)h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money.${NATIVE?" Or turn on Easypaisa SMS in Settings.":""}</span></div>`;
   else{const groups={};all.forEach(t=>{(groups[t.date]=groups[t.date]||[]).push(t)});
     h+=`<section class="sec"><div class="sechead"><h2>Recent</h2></div>`+Object.keys(groups).map(k=>{const sum=groups[k].filter(t=>t.type==="out").reduce((a,t)=>a+(+t.amount||0),0);
       return `<div class="sechead daylbl"><span>${esc(dayLabel(k))}</span><span class="num">${sum?"Spent "+esc(nf.format(sum)):""}</span></div><div class="list">${groups[k].map(txRow).join("")}</div>`}).join("")+`</section>`}
   return h}
+
 function billRow(b){const st=billStatus(b);const paid=b.paid===MK();
   return `<div class="row"><button class="mid" style="text-align:left" data-act="edit-bill" data-id="${b.id}"><div class="t">${esc(b.name)}</div><div class="s ${st.cls}">${esc(st.txt)}</div></button>
   <div class="amt num">${esc(money(b.amount))}</div>
@@ -275,22 +367,55 @@ function billRow(b){const st=billStatus(b);const paid=b.paid===MK();
 function bills(){
   const s=stats();const mk=MK();const paidSum=S.cols.bills.filter(b=>b.paid===mk).reduce((a,b)=>a+(+b.amount||0),0);
   const list=S.cols.bills.slice().sort((a,b)=>((a.paid===mk)-(b.paid===mk))||(a.day-b.day));
-  let h=`<div class="sechead"><h2 style="font-size:26px">Monthly bills</h2></div>
+  let h=`<h2 class="title">Monthly bills</h2>
   <div class="summary"><div class="tile"><div class="k">Still to pay</div><div class="v num">${esc(money(s.due))}</div></div>
   <div class="tile"><div class="k">Paid this month</div><div class="v num" style="color:var(--good)">${esc(money(paidSum))}</div></div></div>`;
-  if(list.length)h+=`<div class="list">${list.map(billRow).join("")}</div>`;
-  else h+=`<div class="empty"><strong>No bills yet</strong><span>Add rent, electricity, internet, phone, school fees, anything you pay every month.</span></div>`;
+  h+=list.length?`<div class="list">${list.map(billRow).join("")}</div>`:`<div class="empty"><strong>No bills yet</strong><span>Add rent, electricity, internet, phone, fees, anything you pay every month.</span></div>`;
   h+=`<button class="addrow" data-act="new-bill">${ICON.plus} Add a bill</button>
-  <p class="note">Tap <b>Pay</b> and it's recorded as spending. Bills reset each month.</p>`;
+  <p class="note">Bills stay here and come back as due at the start of every month. Tap <b>Pay</b> when you pay one and it's counted as spending.</p>`;
   return h}
+
+function savRow(p){const pct=p.target?Math.min(100,(+p.saved||0)/p.target*100):0;
+  return `<div class="row"><button class="mid" style="text-align:left" data-act="edit-sav" data-id="${p.id}"><div class="t">${esc(p.name)}</div>
+  <div class="s">${esc(money(p.saved||0))}${p.target?" of "+esc(money(p.target)):" saved"}</div>${p.target?`<div class="prog"><span style="width:${pct.toFixed(1)}%"></span></div>`:""}</button>
+  <button class="paybtn" data-act="move-sav" data-id="${p.id}">Put in</button></div>`}
+function savings(){
+  const s=stats();const list=S.cols.savings.slice().sort((a,b)=>(a.created||0)-(b.created||0));
+  let h=`<h2 class="title">Savings</h2>
+  <div class="summary"><div class="tile"><div class="k">Total saved</div><div class="v num" style="color:var(--good)">${esc(money(s.saved))}</div></div>
+  <div class="tile"><div class="k">Put in this month</div><div class="v num">${esc(money(s.savedThisMonth))}</div></div></div>`;
+  h+=list.length?`<div class="list">${list.map(savRow).join("")}</div>`:`<div class="empty"><strong>No savings yet</strong><span>Make a pot for each thing you save for, like an emergency fund or Eid.</span></div>`;
+  h+=`<button class="addrow" data-act="new-sav">${ICON.plus} New savings pot</button>
+  <p class="note">Money you put in counts as spent this month, so you don't spend it by mistake.</p>`;
+  return h}
+
+function loanRow(l){const amt=+l.amount||0,back=+l.paidBack||0,left=Math.max(0,amt-back);const pct=amt?Math.min(100,back/amt*100):0;
+  let cls="",when="";
+  if(left>0&&l.due){const dd=Math.round((pdate(l.due)-pdate(today()))/864e5);if(dd<0){cls="over";when=" · overdue since "+fmtDate(l.due)}else{cls=dd<=5?"soon":"";when=" · by "+fmtDate(l.due)}}
+  const sub=left>0?money(left)+" left of "+money(amt)+when:"Cleared · "+money(amt);
+  return `<div class="row"><button class="mid" style="text-align:left" data-act="edit-loan" data-id="${l.id}"><div class="t">${esc(l.name)}</div>
+  <div class="s ${cls}">${esc(sub)}</div><div class="prog"><span style="width:${pct.toFixed(1)}%"></span></div></button>
+  ${left>0?`<button class="paybtn" data-act="repay" data-id="${l.id}">Pay back</button>`:`<span class="paid">${ICON.check}</span>`}</div>`}
+function loans(){
+  const s=stats();const left=l=>Math.max(0,(+l.amount||0)-(+l.paidBack||0));
+  const open=S.cols.loans.filter(l=>left(l)>0).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
+  const done=S.cols.loans.filter(l=>left(l)<=0);
+  const backTotal=S.cols.loans.reduce((a,l)=>a+(+l.paidBack||0),0);
+  let h=`<h2 class="title">Loans</h2>
+  <div class="summary"><div class="tile"><div class="k">Still to pay back</div><div class="v num" style="color:${s.loansLeft>0?"var(--bad)":"var(--good)"}">${esc(money(s.loansLeft))}</div></div>
+  <div class="tile"><div class="k">Paid back so far</div><div class="v num">${esc(money(backTotal))}</div></div></div>`;
+  h+=open.length?`<div class="list">${open.map(loanRow).join("")}</div>`:`<div class="empty"><strong>${done.length?"All loans cleared":"No loans"}</strong><span>Add money you've borrowed so you can see what's left to pay back.</span></div>`;
+  h+=`<button class="addrow" data-act="new-loan">${ICON.plus} Add a loan</button>`;
+  if(done.length)h+=`<section class="sec"><div class="sechead"><h2>Cleared</h2></div><div class="list">${done.map(loanRow).join("")}</div></section>`;
+  return h}
+
 function buy(){
   const items=S.cols.buy;const open=items.filter(i=>!i.done).sort((a,b)=>(a.created||0)-(b.created||0));const done=items.filter(i=>i.done);
   const need=open.reduce((a,i)=>a+(+i.amount||0),0);const s=stats();
-  let h=`<div class="sechead"><h2 style="font-size:26px">To buy</h2></div>
+  let h=`<h2 class="title">To buy</h2>
   <div class="summary"><div class="tile"><div class="k">This list will cost</div><div class="v num">${esc(money(need))}</div></div>
   <div class="tile"><div class="k">Free after bills</div><div class="v num" style="color:${s.left-s.due-need<0?"var(--bad)":"var(--good)"}">${esc(money(s.left-s.due))}</div></div></div>`;
-  if(open.length)h+=`<div class="list">${open.map(buyRow).join("")}</div>`;
-  else h+=`<div class="empty"><strong>Your list is empty</strong><span>Write things down before you buy them. It stops impulse spending.</span></div>`;
+  h+=open.length?`<div class="list">${open.map(buyRow).join("")}</div>`:`<div class="empty"><strong>Your list is empty</strong><span>Write things down before you buy them. It stops impulse spending.</span></div>`;
   h+=`<button class="addrow" data-act="new-buy">${ICON.plus} Add something to buy</button>`;
   if(done.length)h+=`<section class="sec"><div class="sechead"><h2>Bought</h2><button class="link" data-act="clear-bought">Clear</button></div><div class="list">${done.map(buyRow).join("")}</div></section>`;
   return h}
@@ -300,13 +425,15 @@ function buyRow(i){return `<div class="row ${i.done?"done":""}"><button class="c
 
 /* ---------- sheet ---------- */
 const sheet=document.getElementById("sheet"),scrim=document.getElementById("scrim"),sin=document.getElementById("sheetin");
-let onSheet=null;
-function openSheet(html,setup){sin.innerHTML='<div class="handle"></div>'+html;sheet.hidden=false;scrim.hidden=false;
+function openSheet(html,setup){sin.innerHTML='<div class="handle"></div>'+html;sin.onkeydown=null;sheet.hidden=false;scrim.hidden=false;
   requestAnimationFrame(()=>{sheet.classList.add("show");scrim.classList.add("show")});setup&&setup();
   const f=sin.querySelector("[autofocus]");if(f)setTimeout(()=>f.focus(),60)}
-function closeSheet(){sheet.classList.remove("show");scrim.classList.remove("show");setTimeout(()=>{sheet.hidden=true;scrim.hidden=true;sin.innerHTML=""},230)}
+function closeSheet(){sheet.classList.remove("show");scrim.classList.remove("show");setTimeout(()=>{if(!sheet.classList.contains("show")){sheet.hidden=true;scrim.hidden=true;sin.innerHTML=""}},230)}
 scrim.addEventListener("click",closeSheet);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!sheet.hidden)closeSheet()});
+const $=id=>document.getElementById(id);
+function onEnter(fn){sin.onkeydown=e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();fn()}}}
+const amtField=(id,val,auto,label)=>`<div class="amtfield"><span>${esc(S.prof.cur)}</span><input id="${id}" inputmode="decimal" placeholder="0" autocomplete="off" value="${val??""}" ${auto?"autofocus":""} aria-label="${label||"Amount"}"></div>`;
 
 function txSheet(t){
   const st={type:t?t.type:"out",cat:t?t.cat:"Food"};
@@ -314,26 +441,28 @@ function txSheet(t){
     return l.map(([c,v])=>`<button class="chip" data-cat="${c}" aria-pressed="${c===st.cat}"><i style="background:var(${v})"></i>${c}</button>`).join("")};
   openSheet(`<h3>${t?"Edit entry":"Add money entry"}</h3>
   <div class="seg"><button data-type="out" aria-pressed="${st.type==="out"}">I spent</button><button class="inn" data-type="in" aria-pressed="${st.type==="in"}">I got money</button></div>
-  <div class="amtfield"><span>${esc(S.prof.cur)}</span><input id="f-amt" inputmode="decimal" placeholder="0" autocomplete="off" value="${t?t.amount:""}" ${t?"":"autofocus"} aria-label="Amount"></div>
+  ${amtField("f-amt",t?t.amount:"",!t)}
   <div class="err" id="f-err"></div>
   <div class="chips" id="f-chips">${chips()}</div>
   <div class="two"><div class="field"><label for="f-note">Note</label><input id="f-note" placeholder="${st.type==="in"?"e.g. from Ali":"e.g. groceries"}" value="${esc(t?t.note:"")}" maxlength="60"></div>
   <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${t?t.date:today()}"></div></div>
+  ${t&&t.src==="easypaisa"?`<p class="note">Added from an Easypaisa SMS.${t.merchant?" New payments at "+esc(titleCase(t.merchant))+" will use the category you pick here.":""}</p>`:""}
   <button class="primary" id="f-save">${t?"Save changes":"Save"}</button>
   ${t?'<button class="ghost" id="f-del">Delete this entry</button>':""}`,()=>{
     sin.querySelector(".seg").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;st.type=b.dataset.type;
-      sin.querySelectorAll("[data-type]").forEach(x=>x.setAttribute("aria-pressed",x===b));document.getElementById("f-chips").innerHTML=chips();
-      document.getElementById("f-note").placeholder=st.type==="in"?"e.g. from Ali":"e.g. groceries"});
-    document.getElementById("f-chips").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;st.cat=b.dataset.cat;
+      sin.querySelectorAll("[data-type]").forEach(x=>x.setAttribute("aria-pressed",x===b));$("f-chips").innerHTML=chips();
+      $("f-note").placeholder=st.type==="in"?"e.g. from Ali":"e.g. groceries"});
+    $("f-chips").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;st.cat=b.dataset.cat;
       sin.querySelectorAll("[data-cat]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
-    const save=async()=>{const a=parseAmt(document.getElementById("f-amt").value);
-      if(!(a>0)){document.getElementById("f-err").textContent="Enter an amount above 0.";return}
-      const data={type:st.type,cat:st.cat,amount:a,note:document.getElementById("f-note").value.trim(),date:document.getElementById("f-date").value||today()};
+    const save=async()=>{const a=parseAmt($("f-amt").value);
+      if(!(a>0)){$("f-err").textContent="Enter an amount above 0.";return}
+      const data={type:st.type,cat:st.cat,amount:a,note:$("f-note").value.trim(),date:$("f-date").value||today()};
       closeSheet();
-      try{if(t)await upd("txns",t.id,data);else{await add("txns",data);toast((data.type==="in"?"Added ":"Spent ")+money(a))}}catch(e){toast(SAVE_ERR)}};
-    document.getElementById("f-save").onclick=save;
-    sin.onkeydown=(e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();save()}});
-    if(t)document.getElementById("f-del").onclick=async()=>{closeSheet();const copy=Object.assign({},t);delete copy.id;
+      try{if(t){await upd("txns",t.id,data);
+          if(t.src==="easypaisa"&&t.merchant&&data.type==="out"&&data.cat!==t.cat){const m=Object.assign({},S.prof.catMap||{});m[t.merchant]=data.cat;await setProf({catMap:m})}}
+        else{const r=await recordTxn(data);toast(r.matched?"Matched with your Easypaisa entry":(data.type==="in"?"Added ":"Spent ")+money(a))}}catch(e){toast(SAVE_ERR)}};
+    $("f-save").onclick=save;onEnter(save);
+    if(t)$("f-del").onclick=async()=>{closeSheet();const copy=Object.assign({},t);delete copy.id;
       try{await del("txns",t.id);toast("Entry deleted",async()=>{await add("txns",copy)})}catch(e){toast(SAVE_ERR)}};
   })}
 
@@ -347,20 +476,101 @@ function billSheet(b){
   <button class="primary" id="b-save">${b?"Save changes":"Add bill"}</button>
   ${paid?'<button class="plain" id="b-unpay">Mark as not paid this month</button>':""}
   ${b?'<button class="ghost" id="b-del">Delete this bill</button>':""}`,()=>{
-    const save=async()=>{const name=document.getElementById("b-name").value.trim();const a=parseAmt(document.getElementById("b-amt").value);const day=parseInt(document.getElementById("b-day").value,10);
-      const err=document.getElementById("b-err");
+    const save=async()=>{const name=$("b-name").value.trim();const a=parseAmt($("b-amt").value);const day=parseInt($("b-day").value,10);const err=$("b-err");
       if(!name){err.textContent="Give the bill a name.";return} if(!(a>0)){err.textContent="Enter the amount you usually pay.";return}
       if(!(day>=1&&day<=31)){err.textContent="Due day must be between 1 and 31.";return}
-      closeSheet();try{if(b)await upd("bills",b.id,{name,amount:a,day});else await add("bills",{name,amount:a,day,paid:"",paidTxn:""})}catch(e){toast(SAVE_ERR)}};
-    document.getElementById("b-save").onclick=save;
-    sin.onkeydown=(e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();save()}});
-    if(paid)document.getElementById("b-unpay").onclick=async()=>{closeSheet();try{if(b.paidTxn)await del("txns",b.paidTxn);await upd("bills",b.id,{paid:"",paidTxn:""})}catch(e){toast(SAVE_ERR)}};
-    if(b)document.getElementById("b-del").onclick=async()=>{closeSheet();try{await del("bills",b.id);toast("Bill deleted")}catch(e){toast(SAVE_ERR)}};
+      closeSheet();try{if(b)await upd("bills",b.id,{name,amount:a,day});else await add("bills",{name,amount:a,day,paid:"",paidTxn:"",paidPrev:null})}catch(e){toast(SAVE_ERR)}};
+    $("b-save").onclick=save;onEnter(save);
+    if(paid)$("b-unpay").onclick=async()=>{closeSheet();try{await unrecord(b.paidTxn,b.paidPrev);await upd("bills",b.id,{paid:"",paidTxn:"",paidPrev:null})}catch(e){toast(SAVE_ERR)}};
+    if(b)$("b-del").onclick=async()=>{closeSheet();try{await del("bills",b.id);toast("Bill deleted")}catch(e){toast(SAVE_ERR)}};
+  })}
+
+function savSheet(p){
+  openSheet(`<h3>${p?"Edit savings pot":"New savings pot"}</h3>
+  <div class="field"><label for="v-name">Saving for</label><input id="v-name" placeholder="e.g. Emergency fund" value="${esc(p?p.name:"")}" maxlength="40" ${p?"":"autofocus"}></div>
+  <div class="two"><div class="field"><label for="v-target">Goal</label><input id="v-target" inputmode="decimal" placeholder="Optional" value="${p&&p.target?p.target:""}"></div>
+  <div class="field"><label for="v-saved">${p?"Saved now":"Already saved"}</label><input id="v-saved" inputmode="decimal" placeholder="0" value="${p?(p.saved||0):""}"></div></div>
+  <div class="err" id="v-err"></div>
+  ${p?'':'<p class="note">"Already saved" is money you saved before. It isn\'t counted as spending.</p>'}
+  <button class="primary" id="v-save">${p?"Save changes":"Create pot"}</button>
+  ${p?'<button class="ghost" id="v-del">Delete this pot</button>':""}`,()=>{
+    const save=async()=>{const name=$("v-name").value.trim();const tr=$("v-target").value.trim(),sr=$("v-saved").value.trim();
+      const target=tr?parseAmt(tr):0,saved=sr?parseAmt(sr):0;const err=$("v-err");
+      if(!name){err.textContent="Give the pot a name.";return}
+      if(!(target>=0)||!(saved>=0)){err.textContent="Amounts should be numbers.";return}
+      closeSheet();try{if(p)await upd("savings",p.id,{name,target,saved});else await add("savings",{name,target,saved})}catch(e){toast(SAVE_ERR)}};
+    $("v-save").onclick=save;onEnter(save);
+    if(p)$("v-del").onclick=async()=>{closeSheet();const copy=Object.assign({},p);delete copy.id;
+      try{await del("savings",p.id);toast("Pot deleted",async()=>{await add("savings",copy)})}catch(e){toast(SAVE_ERR)}};
+  })}
+function moveSheet(p){
+  let mode="in";
+  openSheet(`<h3>${esc(p.name)}</h3>
+  <div class="seg"><button data-m="in" aria-pressed="true">Put in</button><button data-m="out" aria-pressed="false">Take out</button></div>
+  ${amtField("m-amt","",true)}
+  <div class="err" id="m-err"></div>
+  <p class="note" id="m-note">Counts as spent this month, so it's set aside.</p>
+  <button class="primary" id="m-save">Put in</button>`,()=>{
+    sin.querySelector(".seg").addEventListener("click",e=>{const b=e.target.closest("[data-m]");if(!b)return;mode=b.dataset.m;
+      sin.querySelectorAll("[data-m]").forEach(x=>x.setAttribute("aria-pressed",x===b));
+      $("m-save").textContent=mode==="in"?"Put in":"Take out";
+      $("m-note").textContent=mode==="in"?"Counts as spent this month, so it's set aside.":"Comes back as money in this month. You have "+money(p.saved||0)+" in this pot."});
+    const save=async()=>{const a=parseAmt($("m-amt").value);
+      if(!(a>0)){$("m-err").textContent="Enter an amount above 0.";return}
+      if(mode==="out"&&a>(+p.saved||0)+0.005){$("m-err").textContent="This pot only has "+money(p.saved||0)+".";return}
+      closeSheet();
+      try{const r=await recordTxn(mode==="in"?{type:"out",cat:"Savings",amount:a,note:p.name,date:today()}:{type:"in",cat:"From savings",amount:a,note:p.name,date:today()});
+        const before=+p.saved||0;await upd("savings",p.id,{saved:Math.round((before+(mode==="in"?a:-a))*100)/100});
+        toast((mode==="in"?"Saved ":"Took out ")+money(a),async()=>{await unrecord(r.id,r.prev);await upd("savings",p.id,{saved:before})})}catch(e){toast(SAVE_ERR)}};
+    $("m-save").onclick=save;onEnter(save);
+  })}
+
+function loanSheet(l){
+  const pays=(l&&l.payments)||[];
+  openSheet(`<h3>${l?"Edit loan":"Add a loan"}</h3>
+  <div class="field"><label for="l-name">Who lent you</label><input id="l-name" placeholder="e.g. Bilal" value="${esc(l?l.name:"")}" maxlength="40" ${l?"":"autofocus"}></div>
+  <div class="field"><label for="l-amt">Amount borrowed</label><input id="l-amt" inputmode="decimal" placeholder="0" value="${l?l.amount:""}"></div>
+  <div class="two"><div class="field"><label for="l-date">Borrowed on</label><input id="l-date" type="date" value="${l?l.date:today()}"></div>
+  <div class="field"><label for="l-due">Pay back by</label><input id="l-due" type="date" value="${l&&l.due?l.due:""}"></div></div>
+  ${l?"":`<label class="tog"><input type="checkbox" id="l-in" checked> Add it to this month's money in</label>`}
+  <div class="err" id="l-err"></div>
+  ${pays.length?`<div class="box"><h4>Paid back</h4><div class="hist">${pays.map(x=>`<div><span>${esc(fmtDate(x.d))}</span><span class="num">${esc(money(x.a))}</span></div>`).join("")}</div></div>`:""}
+  <button class="primary" id="l-save">${l?"Save changes":"Add loan"}</button>
+  ${l?'<button class="ghost" id="l-del">Delete this loan</button>':""}`,()=>{
+    const save=async()=>{const name=$("l-name").value.trim();const a=parseAmt($("l-amt").value);const err=$("l-err");
+      if(!name){err.textContent="Write who lent you the money.";return}
+      if(!(a>0)){err.textContent="Enter the amount you borrowed.";return}
+      const data={name,amount:a,date:$("l-date").value||today(),due:$("l-due").value||""};
+      const addIn=!l&&$("l-in").checked;
+      closeSheet();
+      try{if(l)await upd("loans",l.id,data);
+        else{let tid="",prev=null;if(addIn){const r=await recordTxn({type:"in",cat:"Borrowed",amount:a,note:"From "+name,date:data.date});tid=r.id;prev=r.prev}
+          await add("loans",Object.assign(data,{paidBack:0,payments:[],inTxn:tid,inPrev:prev}))}}catch(e){toast(SAVE_ERR)}};
+    $("l-save").onclick=save;onEnter(save);
+    if(l)$("l-del").onclick=async()=>{closeSheet();const copy=Object.assign({},l);delete copy.id;
+      try{await del("loans",l.id);toast("Loan deleted",async()=>{await add("loans",copy)})}catch(e){toast(SAVE_ERR)}};
+  })}
+function repaySheet(l){
+  const left=Math.max(0,(+l.amount||0)-(+l.paidBack||0));
+  openSheet(`<h3>Pay back ${esc(l.name)}</h3>
+  ${amtField("p-amt",left,true)}
+  <div class="err" id="p-err"></div>
+  <p class="note">${esc(money(left))} left to pay. This is counted as Loan repay spending.</p>
+  <button class="primary" id="p-save">Save payment</button>`,()=>{
+    const save=async()=>{const a=parseAmt($("p-amt").value);
+      if(!(a>0)){$("p-err").textContent="Enter an amount above 0.";return}
+      if(a>left+0.005){$("p-err").textContent="That's more than the "+money(left)+" left.";return}
+      closeSheet();
+      try{const r=await recordTxn({type:"out",cat:"Loan repay",amount:a,note:"Paid back "+l.name,date:today()});
+        const before={paidBack:+l.paidBack||0,payments:(l.payments||[]).slice()};
+        await upd("loans",l.id,{paidBack:Math.round((before.paidBack+a)*100)/100,payments:before.payments.concat([{a,d:today(),t:r.id}])});
+        toast(a>=left-0.005?"Loan cleared":"Paid back "+money(a),async()=>{await unrecord(r.id,r.prev);await upd("loans",l.id,before)})}catch(e){toast(SAVE_ERR)}};
+    $("p-save").onclick=save;onEnter(save);
   })}
 
 function buySheet(i,boughtMode){
   openSheet(boughtMode?`<h3>Bought ${esc(i.name)}?</h3>
-  <div class="amtfield"><span>${esc(S.prof.cur)}</span><input id="i-amt" inputmode="decimal" placeholder="0" value="${i.amount||""}" autofocus aria-label="What it cost"></div>
+  ${amtField("i-amt",i.amount||"",true,"What it cost")}
   <div class="err" id="i-err"></div><p class="note">This is recorded as Shopping spending.</p>
   <button class="primary" id="i-save">Save as bought</button>`
   :`<h3>${i?"Edit item":"Add something to buy"}</h3>
@@ -371,46 +581,68 @@ function buySheet(i,boughtMode){
   <button class="primary" id="i-save">${i?"Save changes":"Add to list"}</button>
   ${i&&i.done?'<button class="plain" id="i-undo">Move back to the list</button>':""}
   ${i?'<button class="ghost" id="i-del">Delete item</button>':""}`,()=>{
-    const save=async()=>{const err=document.getElementById("i-err");const raw=document.getElementById("i-amt").value.trim();const a=raw?parseAmt(raw):0;
+    const save=async()=>{const err=$("i-err");const raw=$("i-amt").value.trim();const a=raw?parseAmt(raw):0;
       if(raw&&!(a>=0)){err.textContent="Price should be a number.";return}
       if(boughtMode){if(!(a>0)){err.textContent="Enter what it cost.";return}closeSheet();
-        try{const tid=await add("txns",{type:"out",cat:"Shopping",amount:a,note:i.name,date:today()});await upd("buy",i.id,{done:true,txnId:tid,amount:a});toast("Bought · "+money(a))}catch(e){toast(SAVE_ERR)}return}
-      const name=document.getElementById("i-name").value.trim();if(!name){err.textContent="Write what you want to buy.";return}
-      const note=document.getElementById("i-note").value.trim();closeSheet();
-      try{if(i)await upd("buy",i.id,{name,amount:a,note});else await add("buy",{name,amount:a,note,done:false,txnId:""})}catch(e){toast(SAVE_ERR)}};
-    document.getElementById("i-save").onclick=save;
-    sin.onkeydown=(e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();save()}});
-    const u=document.getElementById("i-undo");if(u)u.onclick=async()=>{closeSheet();try{if(i.txnId)await del("txns",i.txnId);await upd("buy",i.id,{done:false,txnId:""})}catch(e){toast(SAVE_ERR)}};
-    const d=document.getElementById("i-del");if(d)d.onclick=async()=>{closeSheet();try{await del("buy",i.id)}catch(e){toast(SAVE_ERR)}};
+        try{const r=await recordTxn({type:"out",cat:"Shopping",amount:a,note:i.name,date:today()});await upd("buy",i.id,{done:true,txnId:r.id,txnPrev:r.prev,amount:a});toast("Bought · "+money(a))}catch(e){toast(SAVE_ERR)}return}
+      const name=$("i-name").value.trim();if(!name){err.textContent="Write what you want to buy.";return}
+      const note=$("i-note").value.trim();closeSheet();
+      try{if(i)await upd("buy",i.id,{name,amount:a,note});else await add("buy",{name,amount:a,note,done:false,txnId:"",txnPrev:null})}catch(e){toast(SAVE_ERR)}};
+    $("i-save").onclick=save;onEnter(save);
+    const u=$("i-undo");if(u)u.onclick=async()=>{closeSheet();try{await unrecord(i.txnId,i.txnPrev);await upd("buy",i.id,{done:false,txnId:"",txnPrev:null})}catch(e){toast(SAVE_ERR)}};
+    const d=$("i-del");if(d)d.onclick=async()=>{closeSheet();try{await del("buy",i.id)}catch(e){toast(SAVE_ERR)}};
   })}
 
 function settingsSheet(){
+  let smsBox="";
+  if(NATIVE){
+    const last=SMS.last?new Date(SMS.last.t).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
+    smsBox=SMS.on?`<div class="box"><h4>Easypaisa SMS: on</h4>
+      <div class="note">New Easypaisa payments are added each time you open the app.${last?" Last checked "+esc(last)+".":""}</div>
+      <div class="field"><label for="s-snd">Read messages from</label><input id="s-snd" value="${esc(SMS.senders)}"></div>
+      <div class="acts"><button class="plain" id="s-scan" style="padding-left:0">Check now</button><button class="ghost" id="s-off">Turn off</button></div></div>`
+    :`<div class="box"><h4>Easypaisa SMS</h4>
+      <div class="note">Add your Easypaisa payments and money received automatically, from this month's SMS onward. Messages stay on your phone.</div>
+      <button class="primary" id="s-on">Turn on</button></div>`;
+  }
   openSheet(`<h3>Settings</h3>
+  ${smsBox}
   <div class="field"><label for="s-cur">Currency label</label><input id="s-cur" value="${esc(S.prof.cur)}" maxlength="5" placeholder="Rs"></div>
   <p class="note">${S.mode==="db"?"Your entries are saved to your Claude account, so they're here on any device you open this on.":"Your entries are saved on this phone. Uninstalling the app deletes them."}</p>
   <button class="primary" id="s-save">Save</button>`,()=>{
-    document.getElementById("s-save").onclick=async()=>{const c=document.getElementById("s-cur").value.trim()||"Rs";closeSheet();try{await setProf({cur:c})}catch(e){toast(SAVE_ERR)}}})}
+    const on=$("s-on");if(on)on.onclick=turnOnSms;
+    const off=$("s-off");if(off)off.onclick=()=>{SMS.on=false;saveSms();closeSheet();toast("Easypaisa SMS turned off")};
+    const sc=$("s-scan");if(sc)sc.onclick=()=>{const v=$("s-snd").value.trim();if(v)SMS.senders=v;saveSms();closeSheet();scanSms(true)};
+    $("s-save").onclick=async()=>{const c=$("s-cur").value.trim()||"Rs";const snd=$("s-snd");if(snd&&snd.value.trim()){SMS.senders=snd.value.trim();saveSms()}
+      closeSheet();try{await setProf({cur:c})}catch(e){toast(SAVE_ERR)}}})}
 
 /* ---------- actions ---------- */
 async function payBill(b){
-  try{const tid=await add("txns",{type:"out",cat:"Bills",amount:+b.amount,note:b.name,date:today()});
-    await upd("bills",b.id,{paid:MK(),paidTxn:tid});
-    toast("Paid "+b.name+" · "+money(b.amount),async()=>{await del("txns",tid);await upd("bills",b.id,{paid:"",paidTxn:""})})}catch(e){toast(SAVE_ERR)}}
+  try{const r=await recordTxn({type:"out",cat:"Bills",amount:+b.amount,note:b.name,date:today()});
+    await upd("bills",b.id,{paid:MK(),paidTxn:r.id,paidPrev:r.prev});
+    toast((r.matched?"Matched with Easypaisa · ":"Paid ")+b.name,async()=>{await unrecord(r.id,r.prev);await upd("bills",b.id,{paid:"",paidTxn:"",paidPrev:null})})}catch(e){toast(SAVE_ERR)}}
 
+const find=(c,id)=>S.cols[c].find(x=>x.id===id);
 document.addEventListener("click",async e=>{
   const tb=e.target.closest("[data-tab]");
   if(tb){S.tab=tb.dataset.tab;try{localStorage.setItem("hisaab.tab",S.tab)}catch(_){}render();window.scrollTo(0,0);return}
   const a=e.target.closest("[data-act]");if(!a)return;const id=a.dataset.id;
   switch(a.dataset.act){
     case"settings":settingsSheet();break;
-    case"edit-tx":txSheet(S.cols.txns.find(t=>t.id===id));break;
-    case"pay":{const b=S.cols.bills.find(x=>x.id===id);if(b)payBill(b);break}
+    case"edit-tx":txSheet(find("txns",id));break;
+    case"pay":{const b=find("bills",id);if(b)payBill(b);break}
     case"new-bill":billSheet();break;
-    case"edit-bill":billSheet(S.cols.bills.find(x=>x.id===id));break;
+    case"edit-bill":billSheet(find("bills",id));break;
+    case"new-sav":savSheet();break;
+    case"edit-sav":savSheet(find("savings",id));break;
+    case"move-sav":moveSheet(find("savings",id));break;
+    case"new-loan":loanSheet();break;
+    case"edit-loan":loanSheet(find("loans",id));break;
+    case"repay":repaySheet(find("loans",id));break;
     case"new-buy":buySheet();break;
-    case"edit-buy":buySheet(S.cols.buy.find(x=>x.id===id));break;
-    case"bought":buySheet(S.cols.buy.find(x=>x.id===id),true);break;
-    case"clear-bought":{const d=S.cols.buy.filter(i=>i.done);for(const i of d){try{await del("buy",i.id)}catch(_){toast(SAVE_ERR);break}}break}
+    case"edit-buy":buySheet(find("buy",id));break;
+    case"bought":buySheet(find("buy",id),true);break;
+    case"clear-bought":{for(const i of S.cols.buy.filter(i=>i.done)){try{await del("buy",i.id)}catch(_){toast(SAVE_ERR);break}}break}
   }
 });
 document.getElementById("fab").onclick=()=>txSheet();

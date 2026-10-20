@@ -3,6 +3,10 @@ package pk.hisaab.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.Manifest;
+import android.database.Cursor;
+import android.webkit.JavascriptInterface;
+import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInfo;
@@ -54,6 +58,7 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+        web.addJavascriptInterface(new Bridge(), "HisaabNative");
         setContentView(web);
         if (state != null) web.restoreState(state);
         else web.loadUrl("file:///android_asset/index.html");
@@ -64,6 +69,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (!checked) { checked = true; checkForUpdate(); }
+        web.evaluateJavascript("window.hisaabResume&&window.hisaabResume()", null);
         // Back from the "install unknown apps" settings screen: continue the update.
         if (pendingApkUrl != null && canInstall()) {
             String url = pendingApkUrl;
@@ -89,6 +95,73 @@ public class MainActivity extends Activity {
         web.evaluateJavascript("(window.hisaabBack && window.hisaabBack()) ? 1 : 0", result -> {
             if (!"1".equals(result)) finish();
         });
+    }
+
+
+    /* ---------------- Easypaisa SMS ---------------- */
+
+    private static final int SMS_REQ = 7;
+
+    @Override
+    public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(code, perms, results);
+        if (code != SMS_REQ) return;
+        boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        boolean blocked = !granted && !shouldShowRequestPermissionRationale(Manifest.permission.READ_SMS);
+        web.evaluateJavascript("window.hisaabSmsResult&&window.hisaabSmsResult(" + granted + "," + blocked + ")", null);
+    }
+
+    private class Bridge {
+        @JavascriptInterface
+        public boolean hasSms() {
+            return checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED;
+        }
+
+        @JavascriptInterface
+        public void requestSms() {
+            ui.post(() -> requestPermissions(new String[]{Manifest.permission.READ_SMS}, SMS_REQ));
+        }
+
+        @JavascriptInterface
+        public void openAppSettings() {
+            ui.post(() -> startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getPackageName()))));
+        }
+
+        /** Inbox messages newer than `since` (ms) whose sender matches one of the comma-separated names. */
+        @JavascriptInterface
+        public String readSms(double since, String senders) {
+            JSONArray out = new JSONArray();
+            if (!hasSms()) return out.toString();
+            String[] tokens = (senders == null ? "" : senders).toLowerCase().split(",");
+            try (Cursor c = getContentResolver().query(Uri.parse("content://sms/inbox"),
+                    new String[]{"address", "body", "date"}, "date > ?",
+                    new String[]{String.valueOf((long) since)}, "date ASC")) {
+                if (c == null) return out.toString();
+                int seen = 0;
+                while (c.moveToNext() && seen++ < 5000 && out.length() < 800) {
+                    String addr = c.getString(0);
+                    if (addr == null || !senderMatches(addr, tokens)) continue;
+                    JSONObject m = new JSONObject();
+                    m.put("address", addr);
+                    m.put("body", c.getString(1));
+                    m.put("date", c.getLong(2));
+                    out.put(m);
+                }
+            } catch (Exception ignored) { }
+            return out.toString();
+        }
+    }
+
+    private static boolean senderMatches(String addr, String[] tokens) {
+        String a = addr.toLowerCase().replaceAll("[^a-z0-9]", "");
+        for (String t : tokens) {
+            String k = t.trim().replaceAll("[^a-z0-9]", "");
+            if (k.isEmpty()) continue;
+            if (a.equals(k)) return true;
+            if (!k.matches("[0-9]+") && a.contains(k)) return true;
+        }
+        return false;
     }
 
     /* ---------------- updates ---------------- */
