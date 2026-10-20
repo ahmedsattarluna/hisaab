@@ -123,8 +123,9 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 .chip[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:13px;color:var(--muted);font-weight:600}
-.field input{background:var(--surface2);border:1.5px solid transparent;border-radius:14px;padding:12px 14px;outline:none;width:100%}
-.field input:focus{border-color:var(--accent)}
+.field input,.field textarea{background:var(--surface2);border:1.5px solid transparent;border-radius:14px;padding:12px 14px;outline:none;width:100%;font:inherit;color:var(--fg);resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--accent)}
+.box .field textarea{background:var(--surface)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .primary{background:var(--peach);color:var(--ink);font-family:var(--display);font-weight:800;font-size:17px;border-radius:18px;padding:16px}
 .ghost{color:var(--bad);font-weight:600;padding:10px}
@@ -194,7 +195,7 @@ async function setProf(p){Object.assign(S.prof,p);
   if(S.mode==="db"){await S.root.set(JSON.parse(JSON.stringify(S.prof)))}else{saveLocal();render()}}
 
 async function connect(){
-  if(!(window.claude&&window.claude.use)){S.loading=false;render();scanSms();return}
+  if(!(window.claude&&window.claude.use)){S.loading=false;render();checkShared();return}
   try{
     const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
     const uid=user?await user.id():null;
@@ -238,17 +239,19 @@ async function recordTxn(data){
   const id=await add("txns",data);return{id,prev:null,matched:false}}
 async function unrecord(id,prev){if(!id)return;if(prev)await upd("txns",id,prev);else await del("txns",id)}
 
-/* ---------- Easypaisa SMS ---------- */
-const SMSK="hisaab.sms";
-const SMS={on:false,since:0,senders:"3737, easypaisa",seen:[],last:null};
-try{Object.assign(SMS,JSON.parse(localStorage.getItem(SMSK)||"{}"))}catch(e){}
-function saveSms(){SMS.seen=SMS.seen.slice(-1500);try{localStorage.setItem(SMSK,JSON.stringify(SMS))}catch(e){}}
+/* ---------- Easypaisa messages (shared or pasted) ---------- */
 const GUESS=[[/TEA|CAFE|COFFEE|FOOD|KFC|MCDONALD|PIZZA|BURGER|BIRYANI|RESTAURANT|BAKERY|BAKERS|SWEETS|DHABA|HOTEL|MART|GROCER|STORE|SUPER ?MARKET|CHAYE|CHAI/,"Food"],
   [/FUEL|PETROL|PSO|SHELL|TOTAL|ATTOCK|CAREEM|UBER|INDRIVE|BYKEA|YANGO|METRO BUS/,"Transport"],
   [/PHARM|MEDIC|HOSPITAL|CLINIC|LAB\b|DENTAL/,"Health"],
   [/JAZZ|ZONG|TELENOR|UFONE|ELECTRIC|LESCO|SNGPL|SSGC|PTCL|NAYATEL|WATER|INTERNET|NETFLIX/,"Bills"],
   [/DARAZ|OUTFITTERS|KHAADI|SAPPHIRE|J\.|BATA|SERVIS|MALL|SHOP/,"Shopping"]];
-function parseSms(body,ms){
+const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+function msgDate(b){let m;
+  if(m=b.match(/\b(20\d\d)-(\d\d)-(\d\d)\b/))return m[1]+"-"+m[2]+"-"+m[3];
+  if(m=b.match(/\b(\d{1,2})[-\/](\d{1,2})[-\/](20\d\d)\b/))return m[3]+"-"+pad(m[2])+"-"+pad(m[1]);
+  if(m=b.match(/\b(\d{1,2})[- ]([A-Za-z]{3})[a-z]*[- ](20\d\d)\b/)){const mo=MON[m[2].toLowerCase()];if(mo)return m[3]+"-"+pad(mo)+"-"+pad(m[1])}
+  return today()}
+function parseSms(body){
   const b=String(body||"");
   if(/fail|unsuccess|declin|revers|\botp\b|one.time|verification|\bpin\b|tokeni/i.test(b))return null;
   const am=b.match(/(?:rs\.?|pkr)\s*([\d,]+(?:\.\d{1,2})?)/i);if(!am)return null;
@@ -259,47 +262,28 @@ function parseSms(body,ms){
   const rest=b.slice(am.index);
   const STOP="(?=\\s{2,}|\\s+on\\s|\\s+via\\s|\\s+for\\s|\\s+from\\s|,|\\.\\s|\\.$|\\(|\\s+A\\/C|\\s+AC#|\\s+account|$)";
   const r=rest.match(new RegExp(type==="out"?"\\b(?:at|to)\\s+(.+?)"+STOP:"\\bfrom\\s+(.+?)"+STOP,"i"));
-  let who=r?r[1].trim():"";if(/^\d/.test(who))who="";who=who.slice(0,40);
+  let who=r?r[1].trim().replace(/\s+PK$/i,"").replace(/\s+(LHR|LAHORE|KHI|KARACHI|ISB|ISLAMABAD|RWP|RAWALPINDI|FSD|FAISALABAD|MULTAN|PESHAWAR|PSH)(\s+CITY)?$/i,"").trim():"";if(/^\d/.test(who))who="";who=who.slice(0,40);
   const key=who.toUpperCase();
   const idm=b.match(/(?:txn\s*id|trx\s*id|transaction\s*id|\btid)\s*[:#.]?\s*([A-Z0-9]{5,})/i);
-  const ref="sms:"+(idm?idm[1]:ms+":"+amount);
+  const date=msgDate(b);const ref="sms:"+(idm?idm[1]:date+":"+amount+":"+b.length);
   let cat=type==="in"?"Top-up":"Other";
   if(type==="out"&&key){if(S.prof.catMap&&S.prof.catMap[key])cat=S.prof.catMap[key];else{const g=GUESS.find(([re])=>re.test(key));if(g)cat=g[1]}}
-  return{type,amount,cat,merchant:key,note:who?titleCase(who):(type==="in"?"Money in":"Easypaisa payment"),ref,date:dstr(new Date(+ms))}}
-let scanning=false;
-async function scanSms(full){
-  if(!NATIVE||!SMS.on||scanning||S.mode!=="local")return;
-  let ok=false;try{ok=NATIVE.hasSms()}catch(e){}
-  if(!ok)return;
-  scanning=true;let added=0,matched=0;
-  try{
-    const since=full?monthStart():(SMS.since||monthStart());
-    const list=JSON.parse(NATIVE.readSms(since,SMS.senders)||"[]");
-    const seen=new Set(SMS.seen);let max=SMS.since||0;
-    for(const m of list){
-      if(+m.date>max)max=+m.date;
-      const p=parseSms(m.body,m.date);if(!p)continue;
-      if(seen.has(p.ref)||S.cols.txns.some(t=>t.ref===p.ref))continue;
-      seen.add(p.ref);SMS.seen.push(p.ref);
-      const man=S.cols.txns.find(t=>!t.ref&&t.type===p.type&&same(t.amount,p.amount)&&dayDiff(t.date,p.date)<=2);
-      if(man){await upd("txns",man.id,{ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:true});matched++}
-      else{await add("txns",{type:p.type,cat:p.cat,amount:p.amount,note:p.note,date:p.date,ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:false});added++}
-    }
-    SMS.since=Math.max(max,full?0:SMS.since||0);SMS.last={t:Date.now(),added};saveSms();
-    if(added)toast("Added "+added+" from Easypaisa");else if(full)toast(matched?"Easypaisa is up to date":"No new Easypaisa messages");
-  }catch(e){toast("Couldn't read Easypaisa messages. Try Check now in Settings.")}
-  scanning=false}
-window.hisaabResume=()=>{render();scanSms()};
-window.hisaabSmsResult=(granted,blocked)=>{
-  if(granted){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true);return}
-  if(blocked)restrictedHelp();else toast("Hisaab needs SMS access to read Easypaisa messages.")};
-function turnOnSms(){let ok=false;try{ok=NATIVE.hasSms()}catch(e){}
-  if(ok){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true)}else NATIVE.requestSms()}
-function restrictedHelp(){
-  openSheet(`<h3>Allow SMS access</h3>
-  <p class="note" style="font-size:15px;color:var(--fg)">Android blocks SMS access for apps installed from a file until you allow it once.</p>
-  <div class="box"><div>1. Tap <b>Open app settings</b> below.</div><div>2. Tap <b>⋮</b> at the top right, then <b>Allow restricted settings</b>.</div><div>3. Come back to Hisaab and tap <b>Turn on</b> again in Settings.</div></div>
-  <button class="primary" id="r-open">Open app settings</button>`,()=>{document.getElementById("r-open").onclick=()=>{closeSheet();try{NATIVE.openAppSettings()}catch(e){}}})}
+  return{type,amount,cat,merchant:key,note:who?titleCase(who):(type==="in"?"Money in":"Easypaisa payment"),ref,date}}
+function splitMsgs(text){return String(text||"").split(/\n\s*\n|(?=\bTxn ID\b)/i).map(x=>x.trim()).filter(Boolean)}
+async function saveImported(p){
+  if(S.cols.txns.some(t=>t.ref===p.ref))return"dup";
+  const man=S.cols.txns.find(t=>!t.ref&&t.type===p.type&&same(t.amount,p.amount)&&dayDiff(t.date,p.date)<=2);
+  if(man){await upd("txns",man.id,{ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:true});return"matched"}
+  await add("txns",{type:p.type,cat:p.cat,amount:p.amount,note:p.note,date:p.date,ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:false});return"added"}
+async function importText(text){
+  const parsed=splitMsgs(text).map(m=>parseSms(m)).filter(Boolean);
+  if(!parsed.length){toast("Couldn't find a payment in that message.");return}
+  if(parsed.length===1){const p=parsed[0];if(S.cols.txns.some(t=>t.ref===p.ref)){toast("That payment is already added");return}txSheet(null,p);return}
+  let added=0,dup=0;
+  try{for(const p of parsed){const r=await saveImported(p);if(r==="added")added++;else dup++}}catch(e){toast(SAVE_ERR);return}
+  toast("Added "+added+" payment"+(added===1?"":"s")+(dup?" · "+dup+" already there":""))}
+function checkShared(){if(!NATIVE||!NATIVE.takeShared)return;let t="";try{t=NATIVE.takeShared()||""}catch(e){}if(t)importText(t)}
+window.hisaabResume=()=>{render();checkShared()};
 
 /* ---------- numbers ---------- */
 function stats(){
@@ -354,7 +338,7 @@ function home(){
     <div class="bar">${cats.map(([c,v])=>`<span style="width:${(v/s.outM*100).toFixed(2)}%;background:${catColor("out",c)}"></span>`).join("")}</div>
     <div class="legend">${cats.map(([c,v])=>`<div><i style="background:${catColor("out",c)}"></i><span class="n">${esc(c)}</span><span class="a num">${esc(nf.format(v))}</span></div>`).join("")}</div></section>`;
   const all=S.cols.txns.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.created||0)-(a.created||0)).slice(0,60);
-  if(!all.length)h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money.${NATIVE?" Or turn on Easypaisa SMS in Settings.":""}</span></div>`;
+  if(!all.length)h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money.${NATIVE?" Or share an Easypaisa SMS to Hisaab.":""}</span></div>`;
   else{const groups={};all.forEach(t=>{(groups[t.date]=groups[t.date]||[]).push(t)});
     h+=`<section class="sec"><div class="sechead"><h2>Recent</h2></div>`+Object.keys(groups).map(k=>{const sum=groups[k].filter(t=>t.type==="out").reduce((a,t)=>a+(+t.amount||0),0);
       return `<div class="sechead daylbl"><span>${esc(dayLabel(k))}</span><span class="num">${sum?"Spent "+esc(nf.format(sum)):""}</span></div><div class="list">${groups[k].map(txRow).join("")}</div>`}).join("")+`</section>`}
@@ -435,17 +419,18 @@ const $=id=>document.getElementById(id);
 function onEnter(fn){sin.onkeydown=e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();fn()}}}
 const amtField=(id,val,auto,label)=>`<div class="amtfield"><span>${esc(S.prof.cur)}</span><input id="${id}" inputmode="decimal" placeholder="0" autocomplete="off" value="${val??""}" ${auto?"autofocus":""} aria-label="${label||"Amount"}"></div>`;
 
-function txSheet(t){
-  const st={type:t?t.type:"out",cat:t?t.cat:"Food"};
+function txSheet(t,draft){
+  const d0=t||draft;const st={type:d0?d0.type:"out",cat:d0?d0.cat:"Food"};
   const chips=()=>{const l=st.type==="in"?IN:OUT;if(!l.find(x=>x[0]===st.cat))st.cat=l[0][0];
     return l.map(([c,v])=>`<button class="chip" data-cat="${c}" aria-pressed="${c===st.cat}"><i style="background:var(${v})"></i>${c}</button>`).join("")};
-  openSheet(`<h3>${t?"Edit entry":"Add money entry"}</h3>
+  openSheet(`<h3>${t?"Edit entry":draft?"Add from Easypaisa":"Add money entry"}</h3>
   <div class="seg"><button data-type="out" aria-pressed="${st.type==="out"}">I spent</button><button class="inn" data-type="in" aria-pressed="${st.type==="in"}">I got money</button></div>
-  ${amtField("f-amt",t?t.amount:"",!t)}
+  ${amtField("f-amt",d0?d0.amount:"",!d0)}
   <div class="err" id="f-err"></div>
   <div class="chips" id="f-chips">${chips()}</div>
-  <div class="two"><div class="field"><label for="f-note">Note</label><input id="f-note" placeholder="${st.type==="in"?"e.g. from Ali":"e.g. groceries"}" value="${esc(t?t.note:"")}" maxlength="60"></div>
-  <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${t?t.date:today()}"></div></div>
+  <div class="two"><div class="field"><label for="f-note">Note</label><input id="f-note" placeholder="${st.type==="in"?"e.g. from Ali":"e.g. groceries"}" value="${esc(d0?d0.note:"")}" maxlength="60"></div>
+  <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${d0?d0.date:today()}"></div></div>
+  ${draft?`<p class="note">Pick a category and check the details.${draft.merchant?" Next time, payments at "+esc(titleCase(draft.merchant))+" get this category on their own.":""}</p>`:""}
   ${t&&t.src==="easypaisa"?`<p class="note">Added from an Easypaisa SMS.${t.merchant?" New payments at "+esc(titleCase(t.merchant))+" will use the category you pick here.":""}</p>`:""}
   <button class="primary" id="f-save">${t?"Save changes":"Save"}</button>
   ${t?'<button class="ghost" id="f-del">Delete this entry</button>':""}`,()=>{
@@ -460,6 +445,9 @@ function txSheet(t){
       closeSheet();
       try{if(t){await upd("txns",t.id,data);
           if(t.src==="easypaisa"&&t.merchant&&data.type==="out"&&data.cat!==t.cat){const m=Object.assign({},S.prof.catMap||{});m[t.merchant]=data.cat;await setProf({catMap:m})}}
+        else if(draft){const r=await saveImported(Object.assign({},draft,data));
+          if(draft.merchant&&data.type==="out"&&data.cat!==draft.cat){const m=Object.assign({},S.prof.catMap||{});m[draft.merchant]=data.cat;await setProf({catMap:m})}
+          toast(r==="matched"?"Matched with an entry you already added":r==="dup"?"That payment is already added":(data.type==="in"?"Added ":"Spent ")+money(a))}
         else{const r=await recordTxn(data);toast(r.matched?"Matched with your Easypaisa entry":(data.type==="in"?"Added ":"Spent ")+money(a))}}catch(e){toast(SAVE_ERR)}};
     $("f-save").onclick=save;onEnter(save);
     if(t)$("f-del").onclick=async()=>{closeSheet();const copy=Object.assign({},t);delete copy.id;
@@ -594,27 +582,17 @@ function buySheet(i,boughtMode){
   })}
 
 function settingsSheet(){
-  let smsBox="";
-  if(NATIVE){
-    const last=SMS.last?new Date(SMS.last.t).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
-    smsBox=SMS.on?`<div class="box"><h4>Easypaisa SMS: on</h4>
-      <div class="note">New Easypaisa payments are added each time you open the app.${last?" Last checked "+esc(last)+".":""}</div>
-      <div class="field"><label for="s-snd">Read messages from</label><input id="s-snd" value="${esc(SMS.senders)}"></div>
-      <div class="acts"><button class="plain" id="s-scan" style="padding-left:0">Check now</button><button class="ghost" id="s-off">Turn off</button></div></div>`
-    :`<div class="box"><h4>Easypaisa SMS</h4>
-      <div class="note">Add your Easypaisa payments and money received automatically, from this month's SMS onward. Messages stay on your phone.</div>
-      <button class="primary" id="s-on">Turn on</button></div>`;
-  }
+  const smsBox=`<div class="box"><h4>Add from Easypaisa messages</h4>
+    <div class="note">${NATIVE?"In your Messages app, long-press an Easypaisa message, tap <b>Share</b>, then pick <b>Hisaab</b>. Or paste":"Paste"} one or more Easypaisa messages here.</div>
+    <div class="field"><label for="s-msg">Messages</label><textarea id="s-msg" rows="4" placeholder="Txn ID … You have paid Rs. 649.00 at …"></textarea></div>
+    <div class="acts"><button class="plain" id="s-imp" style="padding-left:0">Add these</button></div></div>`;
   openSheet(`<h3>Settings</h3>
   ${smsBox}
   <div class="field"><label for="s-cur">Currency label</label><input id="s-cur" value="${esc(S.prof.cur)}" maxlength="5" placeholder="Rs"></div>
   <p class="note">${S.mode==="db"?"Your entries are saved to your Claude account, so they're here on any device you open this on.":"Your entries are saved on this phone. Uninstalling the app deletes them."}</p>
   <button class="primary" id="s-save">Save</button>`,()=>{
-    const on=$("s-on");if(on)on.onclick=turnOnSms;
-    const off=$("s-off");if(off)off.onclick=()=>{SMS.on=false;saveSms();closeSheet();toast("Easypaisa SMS turned off")};
-    const sc=$("s-scan");if(sc)sc.onclick=()=>{const v=$("s-snd").value.trim();if(v)SMS.senders=v;saveSms();closeSheet();scanSms(true)};
-    $("s-save").onclick=async()=>{const c=$("s-cur").value.trim()||"Rs";const snd=$("s-snd");if(snd&&snd.value.trim()){SMS.senders=snd.value.trim();saveSms()}
-      closeSheet();try{await setProf({cur:c})}catch(e){toast(SAVE_ERR)}}})}
+    $("s-imp").onclick=()=>{const v=$("s-msg").value.trim();if(!v){toast("Paste a message first.");return}closeSheet();setTimeout(()=>importText(v),260)};
+    $("s-save").onclick=async()=>{const c=$("s-cur").value.trim()||"Rs";      closeSheet();try{await setProf({cur:c})}catch(e){toast(SAVE_ERR)}}})}
 
 /* ---------- actions ---------- */
 async function payBill(b){
