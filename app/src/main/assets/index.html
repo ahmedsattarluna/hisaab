@@ -868,6 +868,7 @@ function settingsSheet(){
   ${tabsBox}${salBox}${autoBox}${pasteBox}${backupBox}
   <div class="field"><label for="s-cur">Currency label</label><input id="s-cur" value="${esc(S.prof.cur)}" maxlength="5" placeholder="Rs"></div>
   <p class="note">${S.mode==="db"?"Your entries are saved to your Claude account, so they're here on any device you open this on.":"Your entries are saved on this phone. Uninstalling the app deletes them."}</p>
+  ${NATIVE&&NATIVE.version?`<p class="note">Hisaab ${esc(NATIVE.version())}. New versions download and install by themselves.</p>`:""}
   <button class="primary" id="s-save">Save</button>`,()=>{
     sin.querySelectorAll("[data-tabsw]").forEach(x=>x.onchange=async()=>{const t=Object.assign({},S.prof.tabs);t[x.dataset.tabsw]=x.checked;try{await setProf({tabs:t})}catch(e){toast(SAVE_ERR)}});
     $("s-every").addEventListener("click",e=>{const x=e.target.closest("[data-ev]");if(!x)return;every=+x.dataset.ev;
