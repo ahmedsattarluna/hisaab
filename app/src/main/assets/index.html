@@ -183,6 +183,17 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 .hgrid .k{font-size:12.5px;color:var(--muted)}
 .hgrid .v{font-family:var(--display);font-weight:800;font-size:16.5px}
 .empty:not(:has(strong)){padding:18px 20px}
+[hidden]{display:none!important}
+.ask{background:var(--surface);border:1.5px solid var(--accent);border-radius:24px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.ask-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.ask-q{font-family:var(--display);font-size:21px;font-weight:600;line-height:1.3;text-wrap:balance}
+.ask-q b{font-weight:800}
+.ask-l,.ql{font-size:13px;font-weight:700;color:var(--muted)}
+.ask .acts{display:flex;gap:18px;flex-wrap:wrap}.ask .acts .plain{padding:6px 0}.plain.dim{color:var(--muted)}
+.chip.spec{background:transparent;border:1.5px dashed var(--line)}
+.chip.spec[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip.add{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
+.sheet .field select{background:var(--surface2);border:1.5px solid transparent}
 .loading{color:var(--muted);text-align:center;padding:40px 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -200,9 +211,20 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 <div class="toast" id="toast" role="status"><span id="toastmsg"></span><button id="toastundo" hidden>Undo</button></div>
 
 <script>
-const OUT=[["Food","--c1"],["Transport","--c4"],["Shopping","--c5"],["Bills","--c2"],["Loan repay","--c6"],["Family","--c3"],["Health","--c8"],["Savings","--c9"],["Other","--c7"]];
-const IN=[["Salary","--c3"],["Top-up","--c4"],["Borrowed","--c6"],["From savings","--c9"],["Gift","--c5"],["Other","--c7"]];
-const catColor=(type,c)=>{const l=type==="in"?IN:OUT;const f=l.find(x=>x[0]===c);return "var("+(f?f[1]:"--c7")+")"};
+const OUT=[["Food","--c1"],["Petrol","--c4"],["Bills","--c2"],["Shopping","--c5"],["Family","--c3"],["Health","--c8"],["Transport","--c9"],["Other","--c7"]];
+const IN=[["Salary","--c3"],["Gift","--c5"],["Other","--c7"]];
+/* special kinds: not spending or income, they move loans and borrowed money */
+const SPECIAL_OUT=[["Loan repay","Paid back a loan","--c6"],["Sent back","Sent back money that wasn't mine","--c4"],["Lent","Lent to someone","--c5"]];
+const SPECIAL_IN=[["Borrowed","Loan I took","--c6"],["To send back","Not mine, I'll send it back","--c4"],["Paid back to me","Someone paid me back","--c5"]];
+const SPECIAL=SPECIAL_OUT.concat(SPECIAL_IN).map(x=>x[0]);
+const HIDDEN={"Savings":"--c9","From savings":"--c9","Top-up":"--c4","Balance fix":"--c7"};
+const NOT_SPEND=new Set(["Savings","Loan repay","Sent back","Lent","Balance fix"]);
+const NOT_INCOME=new Set(["Borrowed","To send back","Paid back to me","From savings","Balance fix"]);
+const isSpend=t=>t.type==="out"&&!NOT_SPEND.has(t.cat);
+const isIncome=t=>t.type==="in"&&!NOT_INCOME.has(t.cat);
+function tagColor(c){const f=OUT.concat(IN).find(x=>x[0]===c);if(f)return f[1];const sp=SPECIAL_OUT.concat(SPECIAL_IN).find(x=>x[0]===c);if(sp)return sp[2];if(HIDDEN[c])return HIDDEN[c];
+  let h=0;for(const ch of String(c||""))h=(h*31+ch.charCodeAt(0))>>>0;return "--c"+(1+h%9)}
+const catColor=(type,c)=>"var("+tagColor(c)+")";
 const COLS=["txns","bills","buy","savings","loans"];
 const blank=()=>({txns:[],bills:[],buy:[],savings:[],loans:[]});
 const NATIVE=window.HisaabNative||null;
@@ -262,16 +284,17 @@ const ICON={
   gear:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
 
-/* Recording money: a manual entry that matches an Easypaisa entry (same amount, within 2 days) updates that entry instead of adding a duplicate. */
+/* Recording money: a manual entry that matches a bank entry (same amount, within 2 days) updates that entry instead of adding a duplicate. */
 async function recordTxn(data){
   const m=S.cols.txns.find(t=>t.ref&&!t.linked&&t.type===data.type&&same(t.amount,data.amount)&&dayDiff(t.date,data.date)<=2);
-  if(m){const prev={cat:m.cat,note:m.note||"",linked:false};await upd("txns",m.id,{cat:data.cat,note:data.note||m.note||"",linked:true});return{id:m.id,prev,matched:true}}
+  if(m){const prev={cat:m.cat,note:m.note||"",linked:false,reviewed:m.reviewed!==false};await upd("txns",m.id,{cat:data.cat,note:data.note||m.note||"",linked:true,reviewed:true});return{id:m.id,prev,matched:true}}
   const id=await add("txns",data);return{id,prev:null,matched:false}}
 async function unrecord(id,prev){if(!id)return;if(prev)await upd("txns",id,prev);else await del("txns",id)}
 
-/* ---------- Easypaisa messages (shared or pasted) ---------- */
+/* ---------- bank messages (read, shared or pasted) ---------- */
 const GUESS=[[/TEA|CAFE|COFFEE|FOOD|KFC|MCDONALD|PIZZA|BURGER|BIRYANI|RESTAURANT|BAKERY|BAKERS|SWEETS|DHABA|HOTEL|MART|GROCER|STORE|SUPER ?MARKET|CHAYE|CHAI/,"Food"],
-  [/FUEL|PETROL|PSO|SHELL|TOTAL|ATTOCK|CAREEM|UBER|INDRIVE|BYKEA|YANGO|METRO BUS/,"Transport"],
+  [/FUEL|PETROL|PSO|SHELL|TOTAL|ATTOCK|HASCOL|BYCO|GO PETROL|FILLING|CNG/,"Petrol"],
+  [/CAREEM|UBER|INDRIVE|BYKEA|YANGO|METRO BUS|PARKING/,"Transport"],
   [/PHARM|MEDIC|HOSPITAL|CLINIC|LAB\b|DENTAL/,"Health"],
   [/JAZZ|ZONG|TELENOR|UFONE|ELECTRIC|LESCO|SNGPL|SSGC|PTCL|NAYATEL|WATER|INTERNET|NETFLIX/,"Bills"],
   [/DARAZ|OUTFITTERS|KHAADI|SAPPHIRE|J\.|BATA|SERVIS|MALL|SHOP/,"Shopping"]];
@@ -296,28 +319,36 @@ function parseSms(body,ms){
   const key=who.toUpperCase();
   const idm=b.match(/(?:txn\s*id|trx\s*id|transaction\s*id|\btid)\s*[:#.]?\s*([A-Z0-9]{5,})/i);
   const date=msgDate(b,ms);const ref="sms:"+(idm?idm[1]:date+":"+amount+":"+b.length);
-  let cat=type==="in"?"Top-up":"Other";
+  let cat="";
   if(type==="out"&&key){if(S.prof.catMap&&S.prof.catMap[key])cat=S.prof.catMap[key];else{const g=GUESS.find(([re])=>re.test(key));if(g)cat=g[1]}}
-  return{type,amount,cat,merchant:key,note:who?titleCase(who):(type==="in"?"Money in":"Easypaisa payment"),ref,date}}
+  const name=who?titleCase(who):"";
+  return{type,amount,cat,merchant:key,who:name,note:name||(type==="in"?"Money in":"Bank payment"),ref,date}}
 function splitMsgs(text){return String(text||"").split(/\n\s*\n|(?=\bTxn ID\b)/i).map(x=>x.trim()).filter(Boolean)}
+/* returns {r:"dup"|"matched"|"added", id} */
 async function saveImported(p){
-  if(S.cols.txns.some(t=>t.ref===p.ref))return"dup";
+  const dup=S.cols.txns.find(t=>t.ref===p.ref);if(dup)return{r:"dup",id:dup.id};
+  const src=SMS.bank||"meezan";
   const man=S.cols.txns.find(t=>!t.ref&&t.type===p.type&&same(t.amount,p.amount)&&dayDiff(t.date,p.date)<=2);
-  if(man){await upd("txns",man.id,{ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:true});return"matched"}
-  await add("txns",{type:p.type,cat:p.cat,amount:p.amount,note:p.note,date:p.date,ref:p.ref,src:"easypaisa",merchant:p.merchant,linked:false});return"added"}
+  if(man){await upd("txns",man.id,{ref:p.ref,src,merchant:p.merchant,who:p.who||"",linked:true});return{r:"matched",id:man.id}}
+  const reviewed=p.reviewed===true;
+  const id=await add("txns",{type:p.type,cat:p.cat||"Other",amount:p.amount,note:p.note,date:p.date,ref:p.ref,src,merchant:p.merchant,who:p.who||"",linked:false,reviewed,flag:p.flag||""});
+  return{r:"added",id}}
 async function importText(text){
   if(isBackup(text)){restoreSheet(String(text).trim());return}
   const parsed=splitMsgs(text).map(m=>parseSms(m)).filter(Boolean);
   if(!parsed.length){toast("Couldn't find a payment in that message.");return}
   if(parsed.length===1){const p=parsed[0];if(S.cols.txns.some(t=>t.ref===p.ref)){toast("That payment is already added");return}txSheet(null,p);return}
   let added=0,dup=0;
-  try{for(const p of parsed){const r=await saveImported(p);if(r==="added")added++;else dup++}}catch(e){toast(SAVE_ERR);return}
-  toast("Added "+added+" payment"+(added===1?"":"s")+(dup?" · "+dup+" already there":""))}
+  try{for(const p of parsed){const x=await saveImported(p);if(x.r==="added")added++;else dup++}}catch(e){toast(SAVE_ERR);return}
+  toast("Added "+added+" payment"+(added===1?"":"s")+(added?" to tag on Home":"")+(dup?" · "+dup+" already there":""))}
 /* automatic reading (phone app with SMS access) */
 const SMSK="hisaab.sms";
-const SMS={on:false,since:0,senders:"3737, easypaisa",last:null};
-try{Object.assign(SMS,JSON.parse(localStorage.getItem(SMSK)||"{}"))}catch(e){}
-function saveSms(){try{localStorage.setItem(SMSK,JSON.stringify({on:SMS.on,since:SMS.since,senders:SMS.senders,last:SMS.last}))}catch(e){}}
+const MEEZAN="8079, meezan";
+const SMS={on:false,since:0,senders:MEEZAN,last:null,bank:"",from:0};
+try{const o=JSON.parse(localStorage.getItem(SMSK)||"null");if(o)Object.assign(SMS,{bank:o.bank||"easypaisa"},o)}catch(e){}
+function saveSms(){try{localStorage.setItem(SMSK,JSON.stringify({on:SMS.on,since:SMS.since,senders:SMS.senders,last:SMS.last,bank:SMS.bank,from:SMS.from}))}catch(e){}}
+const bankName=()=>SMS.bank==="easypaisa"?"Easypaisa":"Meezan";
+const perStartMs=()=>mDate(PER().start).getTime();
 const canSms=()=>!!(NATIVE&&NATIVE.readSms);
 const hasSms=()=>{try{return canSms()&&NATIVE.hasSms()}catch(e){return false}};
 let scanning=false;
@@ -325,17 +356,19 @@ async function scanSms(full){
   if(!SMS.on||!hasSms()||scanning||S.mode!=="local")return;
   scanning=true;let added=0;
   try{
-    const since=full?monthStart():(SMS.since||monthStart());
+    const base=SMS.from||perStartMs();
+    const since=full?base-1:(SMS.since||base-1);
     const list=JSON.parse(NATIVE.readSms(since,SMS.senders)||"[]");let max=SMS.since||0;
-    for(const m of list){if(+m.date>max)max=+m.date;const p=parseSms(m.body,m.date);if(!p)continue;if((await saveImported(p))==="added")added++}
+    for(const m of list){if(+m.date>max)max=+m.date;const p=parseSms(m.body,m.date);if(!p)continue;if((await saveImported(p)).r==="added")added++}
     SMS.since=max;SMS.last={t:Date.now(),added};saveSms();
-    if(added)toast("Added "+added+" from Easypaisa");else if(full)toast("Easypaisa is up to date");
-  }catch(e){toast("Couldn't read Easypaisa messages. Try Check now in Settings.")}
+    if(added)toast(added+" new "+bankName()+" payment"+(added>1?"s":"")+" to tag");else if(full)toast(bankName()+" is up to date");
+  }catch(e){toast("Couldn't read "+bankName()+" messages. Try Check now in Settings.")}
   scanning=false}
 window.hisaabSmsResult=(granted,blocked)=>{
-  if(granted){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true);return}
-  if(blocked)restrictedHelp();else toast("Hisaab needs SMS access to read Easypaisa messages.")};
-function turnOnSms(){if(hasSms()){SMS.on=true;SMS.since=monthStart();saveSms();closeSheet();scanSms(true)}else NATIVE.requestSms()}
+  if(granted){startSms();return}
+  if(blocked)restrictedHelp();else toast("Hisaab needs SMS access to read your bank messages.")};
+function startSms(){SMS.on=true;if(!SMS.bank)SMS.bank="meezan";if(!SMS.from)SMS.from=perStartMs();SMS.since=SMS.from-1;saveSms();closeSheet();scanSms(true)}
+function turnOnSms(){if(hasSms())startSms();else NATIVE.requestSms()}
 function restrictedHelp(){
   openSheet(`<h3>Allow SMS access</h3>
   <p class="note" style="font-size:15px;color:var(--fg)">Android locks SMS access for apps installed from a file until you unlock it once.</p>
@@ -388,20 +421,24 @@ function plan(){
   const once=tabOn("bills")?S.cols.bills.filter(b=>b.once&&billLeft(b,p)>0):[];
   const lns=tabOn("loans")?S.cols.loans.filter(l=>l.inPlan!==false&&loanLeft(l)>0):[];
   const buys=tabOn("buy")?S.cols.buy.filter(i=>!i.done):[];
+  const hold=Math.max(0,sumBy(tx.filter(t=>t.type==="in"&&t.cat==="To send back"),t=>t.amount)-sumBy(tx.filter(t=>t.type==="out"&&t.cat==="Sent back"),t=>t.amount));
   const rows=[
     {k:"bills",label:"Bills",c:"--c2",left:sumBy(rec,b=>billLeft(b,p)),total:sumBy(rec,b=>b.amount),n:rec.length},
     {k:"once",tab:"bills",label:"One-time payments",c:"--c1",left:sumBy(once,b=>billLeft(b,p)),total:sumBy(once,b=>b.amount),n:once.length,names:once.map(b=>b.name)},
     {k:"loans",label:"Loans to pay back",c:"--c6",left:sumBy(lns,loanLeft),total:sumBy(lns,l=>l.amount),n:lns.length},
-    {k:"buy",label:"To buy",c:"--c5",left:sumBy(buys,i=>i.amount),total:sumBy(buys,i=>i.amount),n:buys.length,names:buys.map(i=>i.name)}
+    {k:"buy",label:"To buy",c:"--c5",left:sumBy(buys,i=>i.amount),total:sumBy(buys,i=>i.amount),n:buys.length,names:buys.map(i=>i.name)},
+    {k:"hold",tab:"home",label:"Money to send back",c:"--c4",left:hold,total:hold,n:hold>0.005?1:0}
   ].filter(r=>r.n>0);
   const toPay=sumBy(rows,r=>r.left);
   const end=new Date(Math.floor(p.end/12),p.end%12+1,0);
   const daysLeft=Math.max(1,Math.round((end-pdate(today()))/864e5)+1);
   return{p,inHand,toPay,safe:inHand-toPay,rows,ptx,daysLeft,
-    inP:sumBy(ptx.filter(t=>t.type==="in"),t=>t.amount),outP:sumBy(ptx.filter(t=>t.type==="out"),t=>t.amount)}}
+    inP:sumBy(ptx.filter(isIncome),t=>t.amount),outP:sumBy(ptx.filter(isSpend),t=>t.amount),
+    waste:sumBy(ptx.filter(t=>isSpend(t)&&t.flag==="waste"),t=>t.amount)}}
 function rowSub(r){
   if(r.k==="bills")return r.left<=0?"All paid":r.left<r.total?money(r.total-r.left)+" paid of "+money(r.total):r.n+" bill"+(r.n>1?"s":"")+" · nothing paid yet";
   if(r.k==="loans")return r.n+" loan"+(r.n>1?"s":"")+(r.left<r.total?" · "+money(r.total-r.left)+" paid back":"");
+  if(r.k==="hold")return"Sent to you by mistake or for someone else";
   return r.names.join(", ")}
 function catBar(txs){
   const by={};txs.filter(t=>t.type==="out").forEach(t=>{by[t.cat]=(by[t.cat]||0)+(+t.amount||0)});
@@ -441,20 +478,41 @@ function render(){
 function header(){
   return `<header class="top"><div class="brand"><div class="coin">${ICON.note}</div><h1>Hisaab</h1></div>
   <button class="iconbtn" data-act="settings" aria-label="Settings">${ICON.gear}</button></header>`}
-function txRow(t){const c=catColor(t.type,t.cat);
-  const sub=t.cat===FIX?"Balance fix":(t.note?t.cat:(t.type==="in"?"Money in":"Spent"))+(t.src==="easypaisa"?" · Easypaisa":"");
-  return `<button class="row" data-act="edit-tx" data-id="${t.id}"><div class="dot" style="background:${c}">${esc((t.cat||"?")[0])}</div>
-  <div class="mid"><div class="t">${esc(t.note||t.cat)}</div><div class="s">${esc(sub)}</div></div>
+const kindLabel=c=>{const sp=SPECIAL_OUT.concat(SPECIAL_IN).find(x=>x[0]===c);return sp?sp[1]:c};
+function txRow(t){const todo=t.reviewed===false;const c=todo?"var(--line)":catColor(t.type,t.cat);
+  const bank=t.src==="easypaisa"?"Easypaisa":t.src==="meezan"?"Meezan":"";
+  const sub=t.cat===FIX?"Balance fix":todo?"Needs a tag":[kindLabel(t.cat),t.who&&t.who!==t.note?t.who:"",t.flag==="important"?"★ Important":t.flag==="waste"?"Not needed":"",bank].filter(Boolean).join(" · ");
+  return `<button class="row" data-act="edit-tx" data-id="${t.id}"><div class="dot" style="background:${c}">${todo?"?":esc((t.cat||"?")[0])}</div>
+  <div class="mid"><div class="t">${esc(t.note||t.cat)}</div><div class="s ${todo?"soon":""}">${esc(sub)}</div></div>
   <div class="amt num ${t.type==="in"?"in":""}">${t.type==="in"?"+":"−"}${esc(S.prof.cur)} ${nf.format(+t.amount||0)}</div></button>`}
 
+function pendingList(){return S.cols.txns.filter(t=>t.reviewed===false).sort((a,b)=>(SKIP.has(a.id)-SKIP.has(b.id))||(a.date||"").localeCompare(b.date||"")||(a.created||0)-(b.created||0))}
+const SKIP=new Set();
+function askCard(){
+  const list=pendingList();if(!list.length)return"";const x=list[0],out=x.type==="out";
+  const guess=x.cat&&x.cat!=="Other"&&!SPECIAL.includes(x.cat)?[x.cat]:[];
+  const quick=out?[...new Set(guess.concat(["Food","Petrol","Bills","Shopping","Family"],(S.prof.tags||[]).slice(-3)))].slice(0,7):["Salary","Gift","Other"];
+  const specs=out?[["Loan repay","Paid back a loan"],["Sent back","Sent back money"]]:[["Borrowed","Loan I took"],["To send back","Not mine"]];
+  return `<section class="ask" aria-label="Tag a payment">
+    <div class="ask-top"><span>${esc(x.src==="easypaisa"?"Easypaisa":"Meezan")} · ${esc(dayLabel(x.date))}</span><span>${list.length>1?"1 of "+list.length:"Last one"}</span></div>
+    <div class="ask-q">${out?"You spent":"You got"} <b class="num">${esc(money(x.amount))}</b>${x.who?` ${out?"at":"from"} <b>${esc(x.who)}</b>`:""}</div>
+    <div class="ask-l">${out?"What was it for?":"What is this money?"}</div>
+    <div class="chips">${quick.map(c=>`<button class="chip" data-act="qtag" data-id="${x.id}" data-cat="${esc(c)}"><i style="background:${catColor(x.type,c)}"></i>${esc(c)}</button>`).join("")}
+      ${specs.map(([c,l])=>`<button class="chip spec" data-act="qspec" data-id="${x.id}" data-cat="${c}">${esc(l)}</button>`).join("")}</div>
+    <div class="acts"><button class="plain" data-act="review" data-id="${x.id}">Add a note or more options</button><button class="plain dim" data-act="later" data-id="${x.id}">Later</button></div>
+  </section>`}
 function home(){
   const P=plan(),p=P.p,lab=perLabel(p);let h="";
+  if(canSms()&&SMS.bank==="easypaisa")h+=`<div class="notice"><h4>Switch to Meezan Bank</h4>
+    <div class="note">Hisaab will read your Meezan Bank messages instead of Easypaisa. Each payment then shows up here and asks what it was for.</div>
+    <div class="acts"><button class="primary sm" data-act="meezan">Set up Meezan</button></div></div>`;
+  h+=askCard();
   if(seedPending())h+=`<div class="notice"><h4>Add the plan you sent?</h4>
     <div class="note">${SEED.bills.length} bills, ${SEED.once.length} one-time payments, ${SEED.loans.length} loans and ${SEED.buy.length} things to buy. You'll see each one before anything is added.</div>
     <div class="acts"><button class="primary sm" data-act="seed">Review and add</button><button class="plain" data-act="seed-skip">Don't add</button></div></div>`;
   if(!guideDone())h+=`<div class="notice"><h4>Home now plans your whole salary</h4>
     <div class="note">The big number is what you can safely spend until your next salary, after everything you still have to pay.</div>
-    <div class="note"><b>Do this first:</b> tap <b>In hand</b> on the card and enter what's in your Easypaisa right now.</div>
+    <div class="note"><b>Do this first:</b> tap <b>In hand</b> on the card and enter what's in your Meezan account right now.</div>
     <div class="acts"><button class="plain" data-act="explain">How it works</button><button class="plain" data-act="guide-ok">Got it</button></div></div>`;
   const short=P.safe<0;
   h+=`<section class="card ${short?"short":""}" aria-label="Safe to spend">
@@ -477,12 +535,13 @@ function home(){
     const soon=S.cols.bills.filter(b=>+b.day&&billLeft(b,p)>0&&(+b.day)-d<=5).sort((a,b)=>a.day-b.day).slice(0,3);
     if(soon.length)h+=`<section class="sec"><div class="sechead"><h2>Pay soon</h2><button class="link" data-tab="bills">All bills</button></div><div class="list">${soon.map(b=>billRow(b,p)).join("")}</div></section>`}
   h+=`<section class="sec"><div class="sechead"><h2>This salary so far</h2><span class="aside">${esc(lab)}</span></div>
-    <div class="summary"><div class="tile"><div class="k">Money in</div><div class="v num" style="color:var(--good)">${esc(money(P.inP))}</div></div>
-    <div class="tile"><div class="k">Money out</div><div class="v num">${esc(money(P.outP))}</div></div></div>${catBar(P.ptx)}</section>`;
+    <div class="summary"><div class="tile"><div class="k">Income</div><div class="v num" style="color:var(--good)">${esc(money(P.inP))}</div></div>
+    <div class="tile"><div class="k">Spent</div><div class="v num">${esc(money(P.outP))}</div></div></div>${catBar(P.ptx.filter(isSpend))}
+    ${P.waste>0?`<p class="note">You marked ${esc(money(P.waste))} of this as not needed.</p>`:""}</section>`;
   const all=S.cols.txns.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.created||0)-(a.created||0)).slice(0,40);
-  if(!all.length)h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money.${NATIVE?" Or turn on Easypaisa SMS in Settings.":""}</span></div>`;
+  if(!all.length)h+=`<div class="empty"><strong>Nothing added yet</strong><span>Tap <b>Add</b> each time you spend or get money.${NATIVE?" Or turn on Meezan Bank SMS in Settings.":""}</span></div>`;
   else{const groups={};all.forEach(t=>{(groups[t.date]=groups[t.date]||[]).push(t)});
-    h+=`<section class="sec"><div class="sechead"><h2>Recent</h2></div>`+Object.keys(groups).map(k=>{const s=sumBy(groups[k].filter(t=>t.type==="out"&&t.cat!==FIX),t=>t.amount);
+    h+=`<section class="sec"><div class="sechead"><h2>Recent</h2></div>`+Object.keys(groups).map(k=>{const s=sumBy(groups[k].filter(isSpend),t=>t.amount);
       return `<div class="sechead daylbl"><span>${esc(dayLabel(k))}</span><span class="num">${s?"Spent "+esc(nf.format(s)):""}</span></div><div class="list">${groups[k].map(txRow).join("")}</div>`}).join("")+`</section>`}
   return h}
 
@@ -564,10 +623,10 @@ function buyRow(i){return `<div class="row ${i.done?"done":""}"><button class="c
   <div class="amt num">${i.amount?esc(money(i.amount)):'<span class="note">No price</span>'}</div></div>`}
 
 function history(){
-  const months={};const get=mk=>months[mk]||(months[mk]={in:0,spent:0,saved:0,taken:0,back:0,tx:[]});
+  const months={};const get=mk=>months[mk]||(months[mk]={in:0,spent:0,saved:0,taken:0,back:0,waste:0,tx:[]});
   S.cols.txns.forEach(t=>{if(t.cat===FIX||!t.date)return;const m=get(t.date.slice(0,7)),a=+t.amount||0;
-    if(t.type==="in"){if(t.cat==="From savings")m.saved-=a;else if(t.cat!=="Borrowed")m.in+=a}
-    else if(t.cat==="Savings")m.saved+=a;else if(t.cat==="Loan repay")m.back+=a;else{m.spent+=a;m.tx.push(t)}});
+    if(t.type==="in"){if(t.cat==="From savings")m.saved-=a;else if(isIncome(t))m.in+=a}
+    else if(t.cat==="Savings")m.saved+=a;else if(t.cat==="Loan repay")m.back+=a;else if(isSpend(t)){m.spent+=a;m.tx.push(t);if(t.flag==="waste")m.waste+=a}});
   S.cols.loans.forEach(l=>{if(l.date)get(l.date.slice(0,7)).taken+=+l.amount||0});
   const keys=Object.keys(months).sort().reverse();
   let h=`<h2 class="title">History</h2>`;
@@ -575,9 +634,9 @@ function history(){
   h+=keys.map(k=>{const m=months[k];
     const stat=(l,v,c)=>`<div><div class="k">${l}</div><div class="v num"${c&&v?` style="color:${c}"`:""}>${esc(money(v))}</div></div>`;
     return `<section class="hcard"><h3>${esc(mDate(mIdx(k)).toLocaleDateString("en-GB",{month:"long",year:"numeric"}))}${k===MK()?"<span>so far</span>":""}</h3>
-    <div class="hgrid">${stat("Money in",m.in,"var(--good)")}${stat("Spent",m.spent)}${stat("Saved",m.saved,"var(--good)")}${stat("Loans taken",m.taken,"var(--bad)")}${stat("Paid back",m.back)}</div>
+    <div class="hgrid">${stat("Money in",m.in,"var(--good)")}${stat("Spent",m.spent)}${stat("Saved",m.saved,"var(--good)")}${stat("Loans taken",m.taken,"var(--bad)")}${stat("Paid back",m.back)}${m.waste?stat("Not needed",m.waste,"var(--warn)"):""}</div>
     ${catBar(m.tx)}</section>`}).join("");
-  h+=`<p class="note">Spent leaves out savings and loan payments, which have their own numbers. Loans taken uses the date on each loan.</p>`;
+  h+=`<p class="note">Spent leaves out savings, loan payments and money you sent back, which have their own numbers. Loans taken uses the date on each loan.</p>`;
   return h}
 
 /* ---------- sheet ---------- */
@@ -592,42 +651,113 @@ const $=id=>document.getElementById(id);
 function onEnter(fn){sin.onkeydown=e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();fn()}}}
 const amtField=(id,val,auto,label)=>`<div class="amtfield"><span>${esc(S.prof.cur)}</span><input id="${id}" inputmode="decimal" placeholder="0" autocomplete="off" value="${val??""}" ${auto?"autofocus":""} aria-label="${label||"Amount"}"></div>`;
 
-function txSheet(t,draft){
+function txSheet(t,draft,opts){
+  opts=opts||{};
   if(t&&t.cat===FIX){openSheet(`<h3>Balance fix</h3><p class="note" style="font-size:15px;color:var(--fg)">${t.type==="in"?"Added":"Removed"} ${esc(money(t.amount))} on ${esc(fmtDate(t.date))} so In hand matched your real balance. It isn't counted as spending or income.</p>
     <button class="ghost" id="fx-del">Delete this fix</button>`,()=>{$("fx-del").onclick=async()=>{closeSheet();try{await del("txns",t.id)}catch(e){toast(SAVE_ERR)}}});return}
-  const d0=t||draft;const st={type:d0?d0.type:"out",cat:d0?d0.cat:"Food"};
-  const chips=()=>{const l=st.type==="in"?IN:OUT;if(!l.find(x=>x[0]===st.cat))st.cat=l[0][0];
-    return l.map(([c,v])=>`<button class="chip" data-cat="${c}" aria-pressed="${c===st.cat}"><i style="background:var(${v})"></i>${c}</button>`).join("")};
-  openSheet(`<h3>${t?"Edit entry":draft?"Add from Easypaisa":"Add money entry"}</h3>
-  <div class="seg"><button data-type="out" aria-pressed="${st.type==="out"}">I spent</button><button class="inn" data-type="in" aria-pressed="${st.type==="in"}">I got money</button></div>
+  const d0=t||draft;const fromBank=!!(d0&&d0.ref);const origCat=d0?d0.cat:"",merchant=d0&&d0.merchant;const review=!!(t&&t.reviewed===false)||!!draft||!!opts.review;
+  const linkedLoan=t?S.cols.loans.find(l=>l.inTxn===t.id||(l.payments||[]).some(x=>x.t===t.id)):null;
+  const st={type:d0?d0.type:"out",cat:d0?(d0.cat||""):"",flag:(t&&t.flag)||""};
+  if(review&&(st.cat==="Other"||st.cat==="Top-up")&&!opts.cat)st.cat="";
+  if(opts.cat)st.cat=opts.cat;
+  const tagList=()=>st.type==="in"?IN.map(x=>x[0]):[...new Set(OUT.map(x=>x[0]).concat(S.prof.tags||[]))];
+  const chip=c=>`<button class="chip" data-cat="${esc(c)}" aria-pressed="${c===st.cat}"><i style="background:${catColor(st.type,c)}"></i>${esc(c)}</button>`;
+  const chips=()=>{const l=tagList();if(st.cat&&!SPECIAL.includes(st.cat)&&!l.includes(st.cat))l.push(st.cat);
+    return l.map(chip).join("")+(st.type==="out"?`<button class="chip add" id="f-addtag">+ New tag</button>`:"")};
+  const specs=()=>(st.type==="in"?SPECIAL_IN:SPECIAL_OUT).map(([c,l])=>`<button class="chip spec" data-cat="${c}" aria-pressed="${c===st.cat}">${esc(l)}</button>`).join("");
+  const openLoans=()=>S.cols.loans.filter(l=>loanLeft(l)>0);
+  const guessLoan=a=>{const L=openLoans();const nm=String((d0&&d0.who)||"").toLowerCase();
+    const nameOk=l=>nm&&String(l.name).toLowerCase().split(" ")[0]===nm.split(" ")[0];
+    return (L.find(l=>nameOk(l)&&same(loanLeft(l),a))||L.find(l=>same(loanLeft(l),a))||L.find(nameOk)||{}).id||""};
+  const extra=()=>{
+    if(linkedLoan)return `<p class="note">Linked to your loan ${st.type==="in"?"from":"to"} <b>${esc(linkedLoan.name)}</b>. Delete this entry to undo that.</p>`;
+    if(st.cat==="Borrowed")return `<div class="field"><label for="f-who">Who lent it</label><input id="f-who" maxlength="40" placeholder="e.g. Hamza" value="${esc((d0&&d0.who)||"")}"></div>
+      <label class="tog"><input type="checkbox" id="f-plan" checked> Pay back from this salary</label><p class="note">It goes into Loans so you can see what you owe.</p>`;
+    if(st.cat==="Loan repay"){const L=openLoans(),g=guessLoan(parseAmt($("f-amt")?$("f-amt").value:(d0&&d0.amount)));
+      return `<div class="field"><label for="f-loan">Which loan</label><select id="f-loan"><option value="">A loan that isn't in Hisaab</option>${L.map(l=>`<option value="${l.id}" ${l.id===g?"selected":""}>${esc(l.name)} · ${esc(money(loanLeft(l)))} left</option>`).join("")}</select></div>`}
+    if(st.cat==="To send back")return `<p class="note">It stays out of your income and shows as "Money to send back" until you send it. When you do, tag that payment <b>Sent back money</b>.</p>`;
+    if(st.cat==="Sent back")return `<p class="note">This clears money you were holding for someone. It isn't counted as spending.</p>`;
+    if(st.cat==="Lent")return `<p class="note">Not counted as spending. Write who you lent it to in the note.</p>`;
+    return ""};
+  const title=review?(st.type==="in"?"You got money":"You spent money"):t?"Edit entry":"Add money entry";
+  openSheet(`<h3>${title}</h3>
+  ${fromBank&&d0.who?`<p class="note" style="font-size:15px;color:var(--fg)">${st.type==="in"?"From":"At"} <b>${esc(d0.who)}</b> · ${esc(fmtDate(d0.date))}</p>`:""}
+  ${fromBank?"":`<div class="seg" id="f-seg"><button data-type="out" aria-pressed="${st.type==="out"}">I spent</button><button class="inn" data-type="in" aria-pressed="${st.type==="in"}">I got money</button></div>`}
   ${amtField("f-amt",d0?d0.amount:"",!d0)}
   <div class="err" id="f-err"></div>
-  <div class="chips" id="f-chips">${chips()}</div>
-  <div class="two"><div class="field"><label for="f-note">Note</label><input id="f-note" placeholder="${st.type==="in"?"e.g. from Ali":"e.g. groceries"}" value="${esc(d0?d0.note:"")}" maxlength="60"></div>
+  <div id="f-kinds" ${linkedLoan?"hidden":""}>
+    <div class="ql" id="f-q">${st.type==="in"?"What is this money?":"What was it for?"}</div>
+    <div class="chips" id="f-chips">${chips()}</div>
+    <div class="field" id="f-newtag" hidden><input id="f-tagname" maxlength="20" placeholder="New tag, e.g. Gym or Outing"></div>
+    <div class="ql">Or</div>
+    <div class="chips" id="f-specs">${specs()}</div>
+  </div>
+  <div id="f-extra">${extra()}</div>
+  <div class="two"><div class="field"><label for="f-note">Short note</label><input id="f-note" placeholder="e.g. dinner with Musa" value="${esc(d0&&d0.note&&d0.note!==d0.who?d0.note:"")}" maxlength="60"></div>
   <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${d0?d0.date:today()}"></div></div>
-  ${draft?`<p class="note">Pick a category and check the details.${draft.merchant?" Next time, payments at "+esc(titleCase(draft.merchant))+" get this category on their own.":""}</p>`:""}
-  ${t&&t.src==="easypaisa"?`<p class="note">Added from an Easypaisa SMS.${t.merchant?" New payments at "+esc(titleCase(t.merchant))+" will use the category you pick here.":""}</p>`:""}
-  <button class="primary" id="f-save">${t?"Save changes":"Save"}</button>
-  ${t?'<button class="ghost" id="f-del">Delete this entry</button>':""}`,()=>{
-    sin.querySelector(".seg").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;st.type=b.dataset.type;
-      sin.querySelectorAll("[data-type]").forEach(x=>x.setAttribute("aria-pressed",x===b));$("f-chips").innerHTML=chips();
-      $("f-note").placeholder=st.type==="in"?"e.g. from Ali":"e.g. groceries"});
-    $("f-chips").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;st.cat=b.dataset.cat;
-      sin.querySelectorAll("[data-cat]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
-    const save=async()=>{const a=parseAmt($("f-amt").value);
-      if(!(a>0)){$("f-err").textContent="Enter an amount above 0.";return}
-      const data={type:st.type,cat:st.cat,amount:a,note:$("f-note").value.trim(),date:$("f-date").value||today()};
+  <div class="chips" id="f-flag" ${st.type==="out"?"":"hidden"}><button class="chip" data-flag="important" aria-pressed="${st.flag==="important"}">★ Important</button><button class="chip" data-flag="waste" aria-pressed="${st.flag==="waste"}">Not needed</button></div>
+  <button class="primary" id="f-save">${review?"Save":t?"Save changes":"Save"}</button>
+  ${t?`<button class="ghost" id="f-del">${review?"Not a real payment, delete it":"Delete this entry"}</button>`:""}`,()=>{
+    const redraw=()=>{$("f-chips").innerHTML=chips();$("f-specs").innerHTML=specs();$("f-extra").innerHTML=extra();
+      $("f-q").textContent=st.type==="in"?"What is this money?":"What was it for?";$("f-flag").hidden=st.type!=="out"};
+    const seg=$("f-seg");if(seg)seg.addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;st.type=b.dataset.type;st.cat="";
+      sin.querySelectorAll("[data-type]").forEach(x=>x.setAttribute("aria-pressed",x===b));redraw()});
+    $("f-kinds").addEventListener("click",e=>{
+      if(e.target.closest("#f-addtag")){$("f-newtag").hidden=false;$("f-tagname").focus();return}
+      const b=e.target.closest("[data-cat]");if(!b)return;st.cat=b.dataset.cat;$("f-newtag").hidden=true;redraw()});
+    $("f-flag").addEventListener("click",e=>{const b=e.target.closest("[data-flag]");if(!b)return;st.flag=st.flag===b.dataset.flag?"":b.dataset.flag;
+      sin.querySelectorAll("[data-flag]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.flag===st.flag))});
+    const save=async()=>{
+      const a=parseAmt($("f-amt").value);const err=$("f-err");
+      if(!(a>0)){err.textContent="Enter an amount above 0.";return}
+      const nt=$("f-tagname").value.trim();if(!$("f-newtag").hidden&&nt){st.cat=titleCase(nt).slice(0,20)}
+      if(!st.cat){err.textContent=st.type==="in"?"Pick what this money is.":"Pick what it was for.";return}
+      const who=$("f-who")?$("f-who").value.trim():"";
+      if(st.cat==="Borrowed"&&!linkedLoan&&!who){err.textContent="Write who lent it.";return}
+      const loanId=$("f-loan")?$("f-loan").value:"";const inPlan=$("f-plan")?$("f-plan").checked:true;
+      const data={type:st.type,cat:st.cat,amount:a,note:$("f-note").value.trim()||(d0&&d0.who)||"",date:$("f-date").value||today(),flag:st.type==="out"?st.flag:"",reviewed:true};
       closeSheet();
-      try{if(t){await upd("txns",t.id,data);
-          if(t.src==="easypaisa"&&t.merchant&&data.type==="out"&&data.cat!==t.cat){const m=Object.assign({},S.prof.catMap||{});m[t.merchant]=data.cat;await setProf({catMap:m})}}
-        else if(draft){const r=await saveImported(Object.assign({},draft,data));
-          if(draft.merchant&&data.type==="out"&&data.cat!==draft.cat){const m=Object.assign({},S.prof.catMap||{});m[draft.merchant]=data.cat;await setProf({catMap:m})}
-          toast(r==="matched"?"Matched with an entry you already added":r==="dup"?"That payment is already added":(data.type==="in"?"Added ":"Spent ")+money(a))}
-        else{const r=await recordTxn(data);toast(r.matched?"Matched with your Easypaisa entry":(data.type==="in"?"Added ":"Spent ")+money(a))}}catch(e){toast(SAVE_ERR)}};
+      try{
+        if(st.type==="out"&&!SPECIAL.includes(st.cat)&&!OUT.some(x=>x[0]===st.cat)&&!(S.prof.tags||[]).includes(st.cat))await setProf({tags:(S.prof.tags||[]).concat([st.cat])});
+        let id;
+        if(t){await upd("txns",t.id,data);id=t.id}
+        else if(draft){const x=await saveImported(Object.assign({},draft,data));if(x.r==="dup"){toast("That payment is already added");return}id=x.id;if(x.r==="matched")await upd("txns",id,data)}
+        else{const r=await recordTxn(data);id=r.id}
+        if(!linkedLoan&&id){
+          if(st.cat==="Borrowed")await add("loans",{name:who,amount:a,date:data.date,due:"",inPlan,paidBack:0,payments:[],inTxn:id,inPrev:null});
+          if(st.cat==="Loan repay"&&loanId){const l=find("loans",loanId);if(l)await upd("loans",l.id,{paidBack:Math.round(((+l.paidBack||0)+a)*100)/100,payments:(l.payments||[]).concat([{a,d:data.date,t:id}])})}}
+        if(merchant&&st.type==="out"&&!SPECIAL.includes(st.cat)&&st.cat!==origCat){const m=Object.assign({},S.prof.catMap||{});m[merchant]=st.cat;await setProf({catMap:m})}
+        toast(st.cat==="Borrowed"?"Added to Loans":st.cat==="Loan repay"&&loanId?"Loan updated":review?"Saved as "+kindLabel(st.cat):(data.type==="in"?"Added ":"Spent ")+money(a));
+        if(review)nextReview();
+      }catch(e){toast(SAVE_ERR)}};
     $("f-save").onclick=save;onEnter(save);
     if(t)$("f-del").onclick=async()=>{closeSheet();const copy=Object.assign({},t);delete copy.id;
-      try{await del("txns",t.id);toast("Entry deleted",async()=>{await add("txns",copy)})}catch(e){toast(SAVE_ERR)}};
+      try{
+        if(linkedLoan){const ps=(linkedLoan.payments||[]).filter(x=>x.t===t.id);
+          if(ps.length)await upd("loans",linkedLoan.id,{paidBack:Math.max(0,(+linkedLoan.paidBack||0)-sumBy(ps,x=>x.a)),payments:(linkedLoan.payments||[]).filter(x=>x.t!==t.id)})}
+        await del("txns",t.id);
+        toast(linkedLoan&&linkedLoan.inTxn===t.id?"Entry deleted. The loan is still in Loans.":"Entry deleted",linkedLoan?null:async()=>{await add("txns",copy)});
+        if(review)nextReview();
+      }catch(e){toast(SAVE_ERR)}};
   })}
+function nextReview(){setTimeout(()=>{const n=pendingList().find(x=>!SKIP.has(x.id));if(n&&sheet.hidden)txSheet(n)},420)}
+
+/* switching the base account from Easypaisa to Meezan */
+function meezanSheet(){
+  const old=S.cols.txns.filter(t=>t.src==="easypaisa"&&!t.linked);const start=dstr(mDate(PER().start));
+  openSheet(`<h3>Use Meezan Bank</h3>
+  <p class="note" style="font-size:15px;color:var(--fg)">Hisaab will read your Meezan Bank messages. Each payment shows up on Home so you can say what it was for.</p>
+  <div class="field"><label for="mz-from">Read Meezan messages from</label><input id="mz-from" type="date" value="${start}"></div>
+  <div class="field"><label for="mz-snd">Meezan messages come from</label><input id="mz-snd" value="${esc(MEEZAN)}"></div>
+  ${old.length?`<label class="tog"><input type="checkbox" id="mz-rm" checked> Remove the ${old.length} entries that came from Easypaisa messages</label>`:""}
+  <p class="note">Entries you added yourself, bills, loans and savings stay. After the switch, enter your Meezan balance so In hand is right.</p>
+  <button class="primary" id="mz-go">Switch to Meezan</button>`,()=>{
+    $("mz-go").onclick=async()=>{const from=pdate($("mz-from").value||start).getTime();const snd=$("mz-snd").value.trim()||MEEZAN;
+      const rm=$("mz-rm")&&$("mz-rm").checked;closeSheet();
+      try{if(rm)for(const t of old)await del("txns",t.id);
+        Object.assign(SMS,{bank:"meezan",senders:snd,from,since:from-1});saveSms();
+        if(!hasSms()){toast("Allow SMS so Hisaab can read Meezan messages");turnOnSms();return}
+        SMS.on=true;saveSms();await scanSms(true);render();setTimeout(()=>fixSheet(true),900)}catch(e){toast(SAVE_ERR)}}})}
 
 function savSheet(p){
   openSheet(`<h3>${p?"Edit savings pot":"New savings pot"}</h3>
@@ -757,7 +887,7 @@ function paySheet(b){
       try{const r=await recordTxn({type:"out",cat:"Bills",amount:a,note:b.name,date:today()});
         const before=paysOf(b,p);
         await upd("bills",b.id,{payments:before.concat([{p:p.key,a,t:r.id,prev:r.prev,d:today()}])});
-        toast((r.matched?"Matched with Easypaisa · ":"Paid ")+money(a),async()=>{await unrecord(r.id,r.prev);await upd("bills",b.id,{payments:before})})}catch(e){toast(SAVE_ERR)}};
+        toast((r.matched?"Matched with your bank payment · ":"Paid ")+money(a),async()=>{await unrecord(r.id,r.prev);await upd("bills",b.id,{payments:before})})}catch(e){toast(SAVE_ERR)}};
     $("y-save").onclick=save;onEnter(save);
   })}
 
@@ -791,15 +921,15 @@ function loanSheet(l){
 function explainSheet(){
   const P=plan(),lab=perLabel(P.p);
   openSheet(`<h3>How Home works</h3>
-  <div class="box"><h4>In hand · ${esc(money(P.inHand))}</h4><div class="note">All money that came in minus all money that went out. It should match what's in your Easypaisa. If it doesn't, tap <b>Fix</b> once and enter the real amount.</div></div>
+  <div class="box"><h4>In hand · ${esc(money(P.inHand))}</h4><div class="note">All money that came in minus all money that went out. It should match what's in your Meezan account. If it doesn't, tap <b>Fix</b> once and enter the real amount.</div></div>
   <div class="box"><h4>− Still to pay · ${esc(money(P.toPay))}</h4><div class="note">What you still have to pay from this salary (${esc(lab)}): bills, one-time payments, loans you're paying back, and your To buy list. It goes down every time you tap <b>Pay</b>.</div></div>
   <div class="box"><h4>= Safe to spend · ${esc(money(P.safe))}</h4><div class="note">What's left after all of that. Spend only this until your next salary and you won't need to borrow. The "a day" number spreads it over the days left.</div></div>
   <button class="primary" id="e-fix">Fix In hand now</button><button class="plain" id="e-ok">Close</button>`,()=>{
     $("e-ok").onclick=closeSheet;$("e-fix").onclick=()=>{closeSheet();setTimeout(fixSheet,260)}})}
-function fixSheet(){
+function fixSheet(first){
   const P=plan();
-  openSheet(`<h3>Fix money in hand</h3>
-  <p class="note" style="font-size:15px;color:var(--fg)">How much is in your Easypaisa (plus any cash) right now?</p>
+  openSheet(`<h3>${first?"Last step: your balance":"Fix money in hand"}</h3>
+  <p class="note" style="font-size:15px;color:var(--fg)">How much is in your Meezan account (plus any cash) right now? Your Meezan app shows it.</p>
   ${amtField("x-amt",Math.round(P.inHand*100)/100,true)}
   <div class="err" id="x-err"></div>
   <p class="note">Hisaab adds one Balance fix entry for the difference. It doesn't count as spending or income.</p>
@@ -851,21 +981,22 @@ function settingsSheet(){
   const salBox=`<div class="box"><h4>Salary</h4>
     <div class="seg" id="s-every"><button data-ev="1" aria-pressed="${every===1}">Every month</button><button data-ev="2" aria-pressed="${every===2}">Every 2 months</button></div>
     <div class="field" id="s-startf" ${every===2?"":"hidden"}><label for="s-start">This salary covers</label><select id="s-start">${[cur-1,cur].map(i=>`<option value="${mKey(i)}" ${per.L===2&&per.start===i?"selected":""}>${esc(perLabel({start:i,end:i+1,L:2}))}</option>`).join("")}</select></div></div>`;
-  const autoBox=!canSms()?"":SMS.on&&hasSms()?`<div class="box"><h4>Easypaisa SMS: on</h4>
-      <div class="note">New Easypaisa payments are added each time you open the app.${last?" Last checked "+esc(last)+".":""}</div>
+  const autoBox=!canSms()?"":SMS.on&&hasSms()?`<div class="box"><h4>${bankName()} SMS: on</h4>
+      <div class="note">New ${bankName()} payments show up on Home each time you open the app, so you can tag them.${last?" Last checked "+esc(last)+".":""}</div>
       <div class="field"><label for="s-snd">Read messages from</label><input id="s-snd" value="${esc(SMS.senders)}"></div>
       <div class="acts"><button class="plain" id="s-scan">Check now</button><button class="ghost" id="s-off">Turn off</button></div></div>`
-    :`<div class="box"><h4>Easypaisa SMS</h4>
-      <div class="note">Add Easypaisa payments and money received automatically, from this month's SMS onward. Messages stay on your phone.</div>
+    :`<div class="box"><h4>Meezan Bank SMS</h4>
+      <div class="note">Add Meezan payments and money received automatically, from this salary's SMS onward. Messages stay on your phone.</div>
       <button class="primary" id="s-on">Turn on</button></div>`;
-  const pasteBox=`<div class="box"><h4>Add from Easypaisa messages</h4>
-    <div class="note">${NATIVE?"In your Messages app, long-press an Easypaisa message, tap <b>Share</b>, then pick <b>Hisaab</b>. Or paste":"Paste"} one or more Easypaisa messages here.</div>
-    <div class="field"><label for="s-msg">Messages</label><textarea id="s-msg" rows="3" placeholder="Txn ID … You have paid Rs. 649.00 at …"></textarea></div>
+  const pasteBox=`<div class="box"><h4>Add from bank messages</h4>
+    <div class="note">${NATIVE?"In your Messages app, long-press a Meezan message, tap <b>Share</b>, then pick <b>Hisaab</b>. Or paste":"Paste"} one or more bank messages here.</div>
+    <div class="field"><label for="s-msg">Messages</label><textarea id="s-msg" rows="3" placeholder="PKR 3,711.00 charged at …"></textarea></div>
     <div class="acts"><button class="plain" id="s-imp">Add these</button></div></div>`;
   const backupBox=S.mode==="local"?`<div class="box"><h4>Backup</h4><div class="note">Save all your Hisaab data${NATIVE&&NATIVE.shareText?" by sending it to yourself, for example on WhatsApp or Drive":" by copying it"}. To restore, paste that backup in the messages box above.</div>
       <div class="acts"><button class="plain" id="s-bak">Back up now</button></div></div>`:"";
+  const switchBox=canSms()&&SMS.bank==="easypaisa"?`<div class="box"><h4>Use Meezan Bank</h4><div class="note">Hisaab still reads Easypaisa messages.</div><button class="primary" data-act="meezan">Switch to Meezan</button></div>`:"";
   openSheet(`<h3>Settings</h3>
-  ${tabsBox}${salBox}${autoBox}${pasteBox}${backupBox}
+  ${switchBox}${tabsBox}${salBox}${autoBox}${pasteBox}${backupBox}
   <div class="field"><label for="s-cur">Currency label</label><input id="s-cur" value="${esc(S.prof.cur)}" maxlength="5" placeholder="Rs"></div>
   <p class="note">${S.mode==="db"?"Your entries are saved to your Claude account, so they're here on any device you open this on.":"Your entries are saved on this phone. Uninstalling the app deletes them."}</p>
   ${NATIVE&&NATIVE.version?`<p class="note">Hisaab ${esc(NATIVE.version())}. New versions download and install by themselves.</p>`:""}
@@ -874,7 +1005,7 @@ function settingsSheet(){
     $("s-every").addEventListener("click",e=>{const x=e.target.closest("[data-ev]");if(!x)return;every=+x.dataset.ev;
       sin.querySelectorAll("[data-ev]").forEach(y=>y.setAttribute("aria-pressed",y===x));$("s-startf").hidden=every!==2});
     const on=$("s-on");if(on)on.onclick=turnOnSms;
-    const off=$("s-off");if(off)off.onclick=()=>{SMS.on=false;saveSms();closeSheet();toast("Easypaisa SMS turned off")};
+    const off=$("s-off");if(off)off.onclick=()=>{SMS.on=false;saveSms();closeSheet();toast(bankName()+" SMS turned off")};
     const sc=$("s-scan");if(sc)sc.onclick=()=>{const v=$("s-snd").value.trim();if(v)SMS.senders=v;saveSms();closeSheet();scanSms(true)};
     const bk=$("s-bak");if(bk)bk.onclick=async()=>{const t=backupText();
       if(NATIVE&&NATIVE.shareText){try{NATIVE.shareText(t)}catch(e){}return}
@@ -895,6 +1026,14 @@ document.addEventListener("click",async e=>{
     case"explain":explainSheet();break;
     case"guide-ok":try{localStorage.setItem(GUIDE,"1")}catch(_){}render();break;
     case"fix":fixSheet();break;
+    case"meezan":closeSheet();setTimeout(meezanSheet,sheet.hidden?0:260);break;
+    case"review":txSheet(find("txns",id));break;
+    case"qspec":txSheet(find("txns",id),null,{cat:a.dataset.cat});break;
+    case"later":SKIP.add(id);render();break;
+    case"qtag":{const t=find("txns",id);if(!t)break;const cat=a.dataset.cat;const prev={cat:t.cat,reviewed:false};
+      try{await upd("txns",id,{cat,reviewed:true});
+        if(t.merchant&&t.type==="out"&&cat!==prev.cat){const m=Object.assign({},S.prof.catMap||{});m[t.merchant]=cat;await setProf({catMap:m})}
+        toast("Tagged "+cat,async()=>{await upd("txns",id,prev)})}catch(_){toast(SAVE_ERR)}break}
     case"seed":seedSheet();break;
     case"seed-skip":try{await setProf({seeded:SEED.id})}catch(_){toast(SAVE_ERR)}break;
     case"edit-tx":txSheet(find("txns",id));break;
