@@ -130,6 +130,17 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String version() { return Updater.installedName(MainActivity.this); }
 
+        @JavascriptInterface
+        public String updateInfo() {
+            try {
+                return new JSONObject().put("state", updState).put("latest", updLatest)
+                    .put("lastCheck", Updater.prefs(MainActivity.this).getLong("lastCheck", 0)).toString();
+            } catch (Exception e) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public void checkUpdate() { ui.post(() -> checkForUpdate(true)); }
+
         /** Opens Android's share sheet with the given text (used for backups). */
         @JavascriptInterface
         public void shareText(String text) {
@@ -195,27 +206,40 @@ public class MainActivity extends Activity {
 
     /* ---------------- updates ---------------- */
 
-    private Updater.Release ready;   // found while the app is open; installed once you leave it
+    private Updater.Release ready;   // found while the app is open; installed quietly once you leave it
+    private volatile String updState = "idle", updLatest = "";
     private boolean asked;
 
-    private void checkForUpdate() {
+    private void checkForUpdate() { checkForUpdate(false); }
+
+    /** manual = the "Check for updates" button: always ask, and say when there's nothing new. */
+    private void checkForUpdate(boolean manual) {
+        updState = "checking";
         new Thread(() -> {
             try {
                 Updater.Release r = Updater.newer(this);
-                if (r == null) return;
-                if (Updater.canSilent(this)) { ready = r; return; }
+                Updater.prefs(this).edit().putLong("lastCheck", System.currentTimeMillis()).apply();
+                if (r == null) {
+                    updState = "latest";
+                    if (manual) ui.post(() -> Toast.makeText(this, "You have the newest version (" + Updater.installedName(this) + ").", Toast.LENGTH_LONG).show());
+                    return;
+                }
+                updState = "available"; updLatest = r.name;
+                ui.post(() -> web.evaluateJavascript("window.hisaabUpdate&&window.hisaabUpdate(" + JSONObject.quote(r.name) + ")", null));
+                if (!manual && Updater.canSilent(this)) { ready = r; return; }
                 ui.post(() -> {
-                    if (isFinishing() || asked) return;
+                    if (isFinishing() || (asked && !manual)) return;
                     asked = true;
                     new AlertDialog.Builder(this)
                         .setTitle("Update ready")
-                        .setMessage("Install Hisaab " + r.name + " now. After this one, updates install by themselves. Your entries stay as they are.")
+                        .setMessage("Hisaab " + r.name + " is ready to install. Your entries stay as they are.")
                         .setPositiveButton("Install", (d, w) -> startUpdate(r.url))
                         .setNegativeButton("Later", null)
                         .show();
                 });
-            } catch (Exception ignored) {
-                // Offline or GitHub unreachable: try again next time the app opens.
+            } catch (Exception e) {
+                updState = "error";
+                if (manual) ui.post(() -> Toast.makeText(this, "Couldn't check for updates. Check your internet and try again.", Toast.LENGTH_LONG).show());
             }
         }).start();
     }
@@ -265,6 +289,7 @@ public class MainActivity extends Activity {
     private void handleInstallStatus(Intent intent) {
         if (intent == null || !ACTION_INSTALL_STATUS.equals(intent.getAction())) return;
         int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+        if (status == PackageInstaller.STATUS_SUCCESS) Updater.prefs(this).edit().remove("needsPrompt").apply();
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
             Intent confirm = intent.getParcelableExtra(Intent.EXTRA_INTENT);
             if (confirm != null) startActivity(confirm);

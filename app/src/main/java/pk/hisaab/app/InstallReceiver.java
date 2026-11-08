@@ -5,9 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageInstaller;
 import android.os.Build;
 
-/** Receives the result of a background update. Nothing to show: the new version is there next time the app opens. */
+/** Result of a background update. If Android wants a confirmation (or blocks it), remember that so the app asks next time it opens. */
 public class InstallReceiver extends BroadcastReceiver {
     static IntentSender sender(Context ctx) {
         Intent i = new Intent(ctx, InstallReceiver.class);
@@ -16,5 +17,9 @@ public class InstallReceiver extends BroadcastReceiver {
     }
 
     @Override
-    public void onReceive(Context ctx, Intent intent) { }
+    public void onReceive(Context ctx, Intent intent) {
+        int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+        if (status == PackageInstaller.STATUS_SUCCESS) return;
+        Updater.prefs(ctx).edit().putBoolean("needsPrompt", true).apply();
+    }
 }

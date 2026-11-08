@@ -5,6 +5,7 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.os.Build;
@@ -29,6 +30,8 @@ final class Updater {
     }
 
     private Updater() { }
+
+    static SharedPreferences prefs(Context ctx) { return ctx.getSharedPreferences("updates", Context.MODE_PRIVATE); }
 
     static long installedVersion(Context ctx) {
         try {
@@ -59,6 +62,7 @@ final class Updater {
     /** True when Android will let Hisaab update itself with no confirmation screen (Android 12+, after Hisaab installed itself once). */
     static boolean canSilent(Context ctx) {
         if (Build.VERSION.SDK_INT < 31) return false;
+        if (prefs(ctx).getBoolean("needsPrompt", false)) return false;
         try {
             if (!ctx.getPackageManager().canRequestPackageInstalls()) return false;
             String installer = ctx.getPackageManager().getInstallSourceInfo(ctx.getPackageName()).getInstallingPackageName();

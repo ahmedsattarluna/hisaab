@@ -390,6 +390,7 @@ function restoreSheet(text){
 
 function checkShared(){if(!NATIVE||!NATIVE.takeShared)return;let t="";try{t=NATIVE.takeShared()||""}catch(e){}if(t)importText(t)}
 window.hisaabResume=()=>{render();checkShared();scanSms()};
+window.hisaabUpdate=v=>{S.update=v;render()};
 
 /* ---------- salary period ---------- */
 const mIdx=mk=>{const[y,m]=String(mk).split("-").map(Number);return y*12+m-1};
@@ -506,6 +507,9 @@ function home(){
   if(canSms()&&SMS.bank==="easypaisa")h+=`<div class="notice"><h4>Switch to Meezan Bank</h4>
     <div class="note">Hisaab will read your Meezan Bank messages instead of Easypaisa. Each payment then shows up here and asks what it was for.</div>
     <div class="acts"><button class="primary sm" data-act="meezan">Set up Meezan</button></div></div>`;
+  if(S.update)h+=`<div class="notice"><h4>Update ready: Hisaab ${esc(S.update)}</h4>
+    <div class="note">Your entries stay as they are.</div>
+    <div class="acts"><button class="primary sm" data-act="upd">Install now</button></div></div>`;
   h+=askCard();
   if(seedPending())h+=`<div class="notice"><h4>Add the plan you sent?</h4>
     <div class="note">${SEED.bills.length} bills, ${SEED.once.length} one-time payments, ${SEED.loans.length} loans and ${SEED.buy.length} things to buy. You'll see each one before anything is added.</div>
@@ -999,7 +1003,9 @@ function settingsSheet(){
   ${switchBox}${tabsBox}${salBox}${autoBox}${pasteBox}${backupBox}
   <div class="field"><label for="s-cur">Currency label</label><input id="s-cur" value="${esc(S.prof.cur)}" maxlength="5" placeholder="Rs"></div>
   <p class="note">${S.mode==="db"?"Your entries are saved to your Claude account, so they're here on any device you open this on.":"Your entries are saved on this phone. Uninstalling the app deletes them."}</p>
-  ${NATIVE&&NATIVE.version?`<p class="note">Hisaab ${esc(NATIVE.version())}. New versions download and install by themselves.</p>`:""}
+  ${NATIVE&&NATIVE.version?`<div class="box"><h4>App version ${esc(NATIVE.version())}</h4><div class="note">${(()=>{let i={};try{i=JSON.parse(NATIVE.updateInfo?NATIVE.updateInfo():"{}")}catch(e){}
+      return (i.state==="available"?"Hisaab "+esc(i.latest)+" is ready to install. ":"")+(i.lastCheck?"Last checked "+esc(new Date(i.lastCheck).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))+".":"Hisaab checks for updates each time you open it.")})()}</div>
+    ${NATIVE.checkUpdate?`<div class="acts"><button class="plain" data-act="upd">Check for updates</button></div>`:""}</div>`:""}
   <button class="primary" id="s-save">Save</button>`,()=>{
     sin.querySelectorAll("[data-tabsw]").forEach(x=>x.onchange=async()=>{const t=Object.assign({},S.prof.tabs);t[x.dataset.tabsw]=x.checked;try{await setProf({tabs:t})}catch(e){toast(SAVE_ERR)}});
     $("s-every").addEventListener("click",e=>{const x=e.target.closest("[data-ev]");if(!x)return;every=+x.dataset.ev;
@@ -1026,6 +1032,7 @@ document.addEventListener("click",async e=>{
     case"explain":explainSheet();break;
     case"guide-ok":try{localStorage.setItem(GUIDE,"1")}catch(_){}render();break;
     case"fix":fixSheet();break;
+    case"upd":closeSheet();try{NATIVE.checkUpdate();toast("Checking for updates…")}catch(_){toast("Updates work in the phone app.")}break;
     case"meezan":closeSheet();setTimeout(meezanSheet,sheet.hidden?0:260);break;
     case"review":txSheet(find("txns",id));break;
     case"qspec":txSheet(find("txns",id),null,{cat:a.dataset.cat});break;
@@ -1059,6 +1066,9 @@ function toast(msg,undo){document.getElementById("toastmsg").textContent=msg;und
   undoBtn.onclick=async()=>{toastEl.classList.remove("show");try{await undo()}catch(e){toast(SAVE_ERR)}};
   toastEl.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove("show"),undo?5000:2600)}
 
+/* say so after an update installed */
+(()=>{if(!NATIVE||!NATIVE.version)return;try{const v=NATIVE.version(),old=localStorage.getItem("hisaab.ver");localStorage.setItem("hisaab.ver",v);
+  if(old&&old!==v)setTimeout(()=>toast("Updated to Hisaab "+v),800)}catch(e){}})();
 window.hisaabBack=function(){if(!sheet.hidden){closeSheet();return true}if(S.tab!=="home"){S.tab="home";try{localStorage.setItem("hisaab.tab","home")}catch(_){}render();window.scrollTo(0,0);return true}return false};
 if(normProf()&&S.mode==="local")saveLocal();
 render();connect();
